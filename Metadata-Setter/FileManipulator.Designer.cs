@@ -32,8 +32,13 @@
             MnuOptions = new MenuStrip();
             MnuOptionsFile = new ToolStripMenuItem();
             MnuOptionsFileExit = new ToolStripMenuItem();
-            TxtFolderPath = new TextBox();
             BtnFolderSearch = new Button();
+            CboPath = new ComboBox();
+            BtnMetadataChange = new Button();
+            PrgModificationApply = new ProgressBar();
+            LblSelectMetadata = new Label();
+            CboMetadataList = new ComboBox();
+            LstMetadataValues = new ListBox();
             MnuOptions.SuspendLayout();
             SuspendLayout();
             // 
@@ -42,9 +47,10 @@
             LstFiles.FormattingEnabled = true;
             LstFiles.ItemHeight = 15;
             LstFiles.Items.AddRange(new object[] { "Allo", "Comment", "Il", "Va" });
-            LstFiles.Location = new Point(283, 74);
+            LstFiles.Location = new Point(392, 71);
             LstFiles.Name = "LstFiles";
-            LstFiles.Size = new Size(396, 199);
+            LstFiles.SelectionMode = SelectionMode.MultiSimple;
+            LstFiles.Size = new Size(396, 259);
             LstFiles.TabIndex = 0;
             // 
             // MnuOptions
@@ -70,29 +76,81 @@
             MnuOptionsFileExit.Text = "Exit";
             MnuOptionsFileExit.Click += MnuOptionsFileExit_Click;
             // 
-            // TxtFolderPath
-            // 
-            TxtFolderPath.Location = new Point(283, 44);
-            TxtFolderPath.Name = "TxtFolderPath";
-            TxtFolderPath.Size = new Size(359, 23);
-            TxtFolderPath.TabIndex = 2;
-            // 
             // BtnFolderSearch
             // 
-            BtnFolderSearch.Location = new Point(651, 43);
+            BtnFolderSearch.Location = new Point(760, 41);
             BtnFolderSearch.Name = "BtnFolderSearch";
             BtnFolderSearch.Size = new Size(28, 25);
             BtnFolderSearch.TabIndex = 3;
-            BtnFolderSearch.Text = "button1";
+            BtnFolderSearch.Text = "...";
             BtnFolderSearch.UseVisualStyleBackColor = true;
+            // 
+            // CboPath
+            // 
+            CboPath.AutoCompleteMode = AutoCompleteMode.Suggest;
+            CboPath.AutoCompleteSource = AutoCompleteSource.FileSystemDirectories;
+            CboPath.FormattingEnabled = true;
+            CboPath.Location = new Point(392, 42);
+            CboPath.Name = "CboPath";
+            CboPath.Size = new Size(359, 23);
+            CboPath.TabIndex = 4;
+            // 
+            // BtnMetadataChange
+            // 
+            BtnMetadataChange.Font = new Font("Segoe UI", 14F);
+            BtnMetadataChange.Location = new Point(392, 336);
+            BtnMetadataChange.Name = "BtnMetadataChange";
+            BtnMetadataChange.Size = new Size(396, 40);
+            BtnMetadataChange.TabIndex = 5;
+            BtnMetadataChange.Text = "Apply Metadata Change";
+            BtnMetadataChange.UseVisualStyleBackColor = true;
+            // 
+            // PrgModificationApply
+            // 
+            PrgModificationApply.Location = new Point(12, 414);
+            PrgModificationApply.Name = "PrgModificationApply";
+            PrgModificationApply.Size = new Size(776, 24);
+            PrgModificationApply.TabIndex = 6;
+            // 
+            // LblSelectMetadata
+            // 
+            LblSelectMetadata.Font = new Font("Segoe UI", 10F);
+            LblSelectMetadata.Location = new Point(17, 46);
+            LblSelectMetadata.Name = "LblSelectMetadata";
+            LblSelectMetadata.Size = new Size(191, 23);
+            LblSelectMetadata.TabIndex = 7;
+            LblSelectMetadata.Text = "Select a Metadata to Modify:";
+            // 
+            // CboMetadataList
+            // 
+            CboMetadataList.FormattingEnabled = true;
+            CboMetadataList.Location = new Point(17, 82);
+            CboMetadataList.Name = "CboMetadataList";
+            CboMetadataList.Size = new Size(309, 23);
+            CboMetadataList.TabIndex = 8;
+            // 
+            // LstMetadataValues
+            // 
+            LstMetadataValues.FormattingEnabled = true;
+            LstMetadataValues.ItemHeight = 15;
+            LstMetadataValues.Location = new Point(40, 129);
+            LstMetadataValues.Name = "LstMetadataValues";
+            LstMetadataValues.SelectionMode = SelectionMode.None;
+            LstMetadataValues.Size = new Size(265, 244);
+            LstMetadataValues.TabIndex = 9;
             // 
             // FrmFileManipulator
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(LstMetadataValues);
+            Controls.Add(CboMetadataList);
+            Controls.Add(LblSelectMetadata);
+            Controls.Add(PrgModificationApply);
+            Controls.Add(BtnMetadataChange);
+            Controls.Add(CboPath);
             Controls.Add(BtnFolderSearch);
-            Controls.Add(TxtFolderPath);
             Controls.Add(LstFiles);
             Controls.Add(MnuOptions);
             MainMenuStrip = MnuOptions;
@@ -110,7 +168,12 @@
         private MenuStrip MnuOptions;
         private ToolStripMenuItem MnuOptionsFile;
         private ToolStripMenuItem MnuOptionsFileExit;
-        private TextBox TxtFolderPath;
         private Button BtnFolderSearch;
+        private ComboBox CboPath;
+        private Button BtnMetadataChange;
+        private ProgressBar PrgModificationApply;
+        private Label LblSelectMetadata;
+        private ComboBox CboMetadataList;
+        private ListBox LstMetadataValues;
     }
 }

@@ -11,5 +11,10 @@ namespace Metadata_Setter
         {
             Close();
         }
+
+        private void CboMetadataList_CursorChanged(object sender, EventArgs e)
+        {
+            this.Cursor = this.DefaultCursor;
+        }
     }
 }
