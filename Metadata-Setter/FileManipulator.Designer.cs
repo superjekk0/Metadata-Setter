@@ -88,12 +88,14 @@
             // CboPath
             // 
             CboPath.AutoCompleteMode = AutoCompleteMode.Suggest;
-            CboPath.AutoCompleteSource = AutoCompleteSource.FileSystemDirectories;
+            CboPath.AutoCompleteSource = AutoCompleteSource.FileSystem;
             CboPath.FormattingEnabled = true;
             CboPath.Location = new Point(392, 42);
             CboPath.Name = "CboPath";
             CboPath.Size = new Size(359, 23);
             CboPath.TabIndex = 4;
+            CboPath.DropDown += CboPath_DropDown;
+            CboPath.SelectedValueChanged += CboPath_ValueChanged;
             // 
             // BtnMetadataChange
             // 
