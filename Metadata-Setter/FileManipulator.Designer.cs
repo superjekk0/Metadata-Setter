@@ -28,7 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            LstFiles = new ListBox();
+            components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmFileManipulator));
             MnuOptions = new MenuStrip();
             MnuOptionsFile = new ToolStripMenuItem();
             MnuOptionsFileExit = new ToolStripMenuItem();
@@ -39,19 +40,12 @@
             LblSelectMetadata = new Label();
             CboMetadataList = new ComboBox();
             LstMetadataValues = new ListBox();
+            TxtApplyValue = new TextBox();
+            LblNewValue = new Label();
+            LsvFiles = new ListView();
+            ImgIcons = new ImageList(components);
             MnuOptions.SuspendLayout();
             SuspendLayout();
-            // 
-            // LstFiles
-            // 
-            LstFiles.FormattingEnabled = true;
-            LstFiles.ItemHeight = 15;
-            LstFiles.Items.AddRange(new object[] { "Allo", "Comment", "Il", "Va" });
-            LstFiles.Location = new Point(392, 71);
-            LstFiles.Name = "LstFiles";
-            LstFiles.SelectionMode = SelectionMode.MultiSimple;
-            LstFiles.Size = new Size(396, 259);
-            LstFiles.TabIndex = 0;
             // 
             // MnuOptions
             // 
@@ -100,7 +94,7 @@
             // BtnMetadataChange
             // 
             BtnMetadataChange.Font = new Font("Segoe UI", 14F);
-            BtnMetadataChange.Location = new Point(392, 336);
+            BtnMetadataChange.Location = new Point(392, 384);
             BtnMetadataChange.Name = "BtnMetadataChange";
             BtnMetadataChange.Size = new Size(396, 40);
             BtnMetadataChange.TabIndex = 5;
@@ -109,7 +103,7 @@
             // 
             // PrgModificationApply
             // 
-            PrgModificationApply.Location = new Point(12, 414);
+            PrgModificationApply.Location = new Point(12, 446);
             PrgModificationApply.Name = "PrgModificationApply";
             PrgModificationApply.Size = new Size(776, 24);
             PrgModificationApply.TabIndex = 6;
@@ -135,17 +129,55 @@
             // 
             LstMetadataValues.FormattingEnabled = true;
             LstMetadataValues.ItemHeight = 15;
-            LstMetadataValues.Location = new Point(40, 129);
+            LstMetadataValues.Location = new Point(39, 180);
             LstMetadataValues.Name = "LstMetadataValues";
             LstMetadataValues.SelectionMode = SelectionMode.None;
             LstMetadataValues.Size = new Size(265, 244);
             LstMetadataValues.TabIndex = 9;
             // 
+            // TxtApplyValue
+            // 
+            TxtApplyValue.Location = new Point(39, 151);
+            TxtApplyValue.Name = "TxtApplyValue";
+            TxtApplyValue.Size = new Size(265, 23);
+            TxtApplyValue.TabIndex = 10;
+            // 
+            // LblNewValue
+            // 
+            LblNewValue.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            LblNewValue.Location = new Point(39, 125);
+            LblNewValue.Name = "LblNewValue";
+            LblNewValue.Size = new Size(265, 23);
+            LblNewValue.TabIndex = 11;
+            LblNewValue.Text = "New Value to Apply:";
+            // 
+            // LsvFiles
+            // 
+            LsvFiles.Location = new Point(392, 71);
+            LsvFiles.Name = "LsvFiles";
+            LsvFiles.Size = new Size(396, 289);
+            LsvFiles.SmallImageList = ImgIcons;
+            LsvFiles.TabIndex = 12;
+            LsvFiles.UseCompatibleStateImageBehavior = false;
+            LsvFiles.View = View.Details;
+            LsvFiles.MouseDoubleClick += LsvFiles_MouseDoubleClick;
+            // 
+            // ImgIcons
+            // 
+            ImgIcons.ColorDepth = ColorDepth.Depth32Bit;
+            ImgIcons.ImageStream = (ImageListStreamer)resources.GetObject("ImgIcons.ImageStream");
+            ImgIcons.TransparentColor = Color.Transparent;
+            ImgIcons.Images.SetKeyName(0, "folderIcon.png");
+            ImgIcons.Images.SetKeyName(1, "fileIcon.png");
+            // 
             // FrmFileManipulator
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(800, 482);
+            Controls.Add(LsvFiles);
+            Controls.Add(LblNewValue);
+            Controls.Add(TxtApplyValue);
             Controls.Add(LstMetadataValues);
             Controls.Add(CboMetadataList);
             Controls.Add(LblSelectMetadata);
@@ -153,11 +185,10 @@
             Controls.Add(BtnMetadataChange);
             Controls.Add(CboPath);
             Controls.Add(BtnFolderSearch);
-            Controls.Add(LstFiles);
             Controls.Add(MnuOptions);
             MainMenuStrip = MnuOptions;
             Name = "FrmFileManipulator";
-            Text = "Form1";
+            Text = "Metadata File Manipulator";
             MnuOptions.ResumeLayout(false);
             MnuOptions.PerformLayout();
             ResumeLayout(false);
@@ -165,8 +196,6 @@
         }
 
         #endregion
-
-        private ListBox LstFiles;
         private MenuStrip MnuOptions;
         private ToolStripMenuItem MnuOptionsFile;
         private ToolStripMenuItem MnuOptionsFileExit;
@@ -177,5 +206,9 @@
         private Label LblSelectMetadata;
         private ComboBox CboMetadataList;
         private ListBox LstMetadataValues;
+        private TextBox TxtApplyValue;
+        private Label LblNewValue;
+        private ListView LsvFiles;
+        private ImageList ImgIcons;
     }
 }
