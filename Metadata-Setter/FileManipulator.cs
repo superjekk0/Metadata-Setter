@@ -12,12 +12,12 @@ namespace Metadata_Setter
         {
             InitializeComponent();
             repository = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-            //CboPath.Items.AddRange(Directory.GetFiles(folder));
-
-            ColumnHeader header = new ColumnHeader();
-            header.Text = "";
-            header.Name = "Type";
-            header.Width = LsvFiles.Width;
+            ColumnHeader header = new ColumnHeader
+            {
+                Text = "",
+                Name = "Type",
+                Width = LsvFiles.Width
+            };
 
             LsvFiles.Columns.Add(header);
             LsvFiles.HeaderStyle = ColumnHeaderStyle.None;
@@ -25,6 +25,8 @@ namespace Metadata_Setter
             CboPath.Items.Add(repository);
             CboPath.Items.AddRange(Directory.GetDirectories(repository).OrderBy(f => f).ToArray());
             CboPath.Text = repository;
+
+            RenderFileTree(CboPath.Text);
         }
 
         private void MnuOptionsFileExit_Click(object sender, EventArgs e)
@@ -35,11 +37,6 @@ namespace Metadata_Setter
         //
         // CboPath
         //
-        private void CboPath_ValueChanged(object sender, EventArgs e)
-        {
-            RenderFileTree();
-        }
-
         private void CboPath_DropDown(object sender, EventArgs e)
         {
             CboPath.BeginUpdate();
@@ -53,9 +50,7 @@ namespace Metadata_Setter
                     CboPath.Items.Remove(item);
                 }
             }
-            //CboPath.Items.Add(folder);
             CboPath.Items.AddRange(Directory.GetDirectories(repository));
-            //CboPath.Text = folder;
 
             CboPath.EndUpdate();
         }
@@ -66,8 +61,7 @@ namespace Metadata_Setter
             if (target.ImageIndex == 0)
             {
                 CboPath.Text = target.Text;
-                UpdateRepository();
-                RenderFileTree();
+                RenderFileTree(CboPath.Text);
             }
         }
 
@@ -83,7 +77,7 @@ namespace Metadata_Setter
             if (result == DialogResult.OK)
             {
                 CboPath.Text = dialog.SelectedPath;
-                RenderFileTree();
+                RenderFileTree(CboPath.Text);
             }
         }
 
@@ -92,13 +86,10 @@ namespace Metadata_Setter
             DirectoryInfo? parent = Directory.GetParent(repository);
             if (parent != null)
             {
-                //repository = parent.FullName;
                 CboPath.Text = parent.FullName;
-                UpdateRepository();
-                RenderFileTree();
+                RenderFileTree(CboPath.Text);
             }
         }
-
 
         //
         // Various utility functions
@@ -107,28 +98,40 @@ namespace Metadata_Setter
         {
             if (ActiveControl == CboPath && keyData == Keys.Enter)
             {
-                UpdateRepository();
-                RenderFileTree();
+                RenderFileTree(CboPath.Text);
                 LsvFiles.Focus();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        private void RenderFileTree()
+        private void RenderFileTree(string path)
         {
+            var itemsBefore = LsvFiles.Items.OfType<ListViewItem>().ToArray();
             CboPath.BeginUpdate();
 
-            LsvFiles.Items.Clear();
-            LsvFiles.Items.AddRange(Directory.GetDirectories(repository).Select(d => new ListViewItem(d, 0)).ToArray());
-            LsvFiles.Items.AddRange(Directory.GetFiles(repository).Select(f => new ListViewItem(f, 1)).ToArray());
+            try
+            {
+                LsvFiles.Items.Clear();
+                LsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d, 0)).ToArray());
+                LsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f, 1)).ToArray());
+                UpdateRepository(path);
+            } 
+            catch (Exception ex)
+            {
+                CboPath.Text = repository;
+                LsvFiles.Items.Clear();
+                LsvFiles.Items.AddRange(itemsBefore);
+                MessageBox.Show(ex.Message, "Directory access", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             CboPath.EndUpdate();
+
         }
 
-        private void UpdateRepository()
+        private void UpdateRepository(string path)
         {
-            repository = CboPath.Text;
+            repository = path;
         }
 
     }

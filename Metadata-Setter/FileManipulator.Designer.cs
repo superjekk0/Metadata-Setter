@@ -91,7 +91,6 @@
             CboPath.Size = new Size(325, 23);
             CboPath.TabIndex = 4;
             CboPath.DropDown += CboPath_DropDown;
-            CboPath.SelectedValueChanged += CboPath_ValueChanged;
             // 
             // BtnMetadataChange
             // 
