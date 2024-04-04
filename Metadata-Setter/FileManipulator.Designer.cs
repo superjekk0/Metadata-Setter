@@ -175,12 +175,13 @@
             // BtnUpperFolder
             // 
             BtnUpperFolder.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            BtnUpperFolder.Image = (Image)resources.GetObject("BtnUpperFolder.Image");
             BtnUpperFolder.Location = new Point(392, 41);
             BtnUpperFolder.Name = "BtnUpperFolder";
             BtnUpperFolder.Size = new Size(28, 25);
             BtnUpperFolder.TabIndex = 13;
-            BtnUpperFolder.Text = "↑";
             BtnUpperFolder.UseVisualStyleBackColor = true;
+            BtnUpperFolder.Click += BtnUpperFolder_Click;
             // 
             // FrmFileManipulator
             // 
