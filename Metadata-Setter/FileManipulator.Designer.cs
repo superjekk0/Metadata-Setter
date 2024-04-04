@@ -44,6 +44,7 @@
             LblNewValue = new Label();
             LsvFiles = new ListView();
             ImgIcons = new ImageList(components);
+            BtnUpperFolder = new Button();
             MnuOptions.SuspendLayout();
             SuspendLayout();
             // 
@@ -85,9 +86,9 @@
             CboPath.AutoCompleteMode = AutoCompleteMode.Suggest;
             CboPath.AutoCompleteSource = AutoCompleteSource.FileSystem;
             CboPath.FormattingEnabled = true;
-            CboPath.Location = new Point(392, 42);
+            CboPath.Location = new Point(426, 42);
             CboPath.Name = "CboPath";
-            CboPath.Size = new Size(359, 23);
+            CboPath.Size = new Size(325, 23);
             CboPath.TabIndex = 4;
             CboPath.DropDown += CboPath_DropDown;
             CboPath.SelectedValueChanged += CboPath_ValueChanged;
@@ -171,11 +172,22 @@
             ImgIcons.Images.SetKeyName(0, "folderIcon.png");
             ImgIcons.Images.SetKeyName(1, "fileIcon.png");
             // 
+            // BtnUpperFolder
+            // 
+            BtnUpperFolder.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            BtnUpperFolder.Location = new Point(392, 41);
+            BtnUpperFolder.Name = "BtnUpperFolder";
+            BtnUpperFolder.Size = new Size(28, 25);
+            BtnUpperFolder.TabIndex = 13;
+            BtnUpperFolder.Text = "↑";
+            BtnUpperFolder.UseVisualStyleBackColor = true;
+            // 
             // FrmFileManipulator
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 482);
+            Controls.Add(BtnUpperFolder);
             Controls.Add(LsvFiles);
             Controls.Add(LblNewValue);
             Controls.Add(TxtApplyValue);
@@ -211,5 +223,6 @@
         private Label LblNewValue;
         private ListView LsvFiles;
         private ImageList ImgIcons;
+        private Button BtnUpperFolder;
     }
 }
