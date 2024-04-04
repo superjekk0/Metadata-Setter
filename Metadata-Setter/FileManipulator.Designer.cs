@@ -72,12 +72,13 @@
             // 
             // BtnFolderSearch
             // 
+            BtnFolderSearch.Image = (Image)resources.GetObject("BtnFolderSearch.Image");
             BtnFolderSearch.Location = new Point(760, 41);
             BtnFolderSearch.Name = "BtnFolderSearch";
             BtnFolderSearch.Size = new Size(28, 25);
             BtnFolderSearch.TabIndex = 3;
-            BtnFolderSearch.Text = "...";
             BtnFolderSearch.UseVisualStyleBackColor = true;
+            BtnFolderSearch.Click += BtnFolderSearch_Click;
             // 
             // CboPath
             // 

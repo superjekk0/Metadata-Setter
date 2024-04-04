@@ -36,15 +36,7 @@ namespace Metadata_Setter
         //
         private void CboPath_ValueChanged(object sender, EventArgs e)
         {
-            CboPath.BeginUpdate();
-
-            string folder = CboPath.Text;
-
-            LsvFiles.Items.Clear();
-            LsvFiles.Items.AddRange(Directory.GetDirectories(folder).Select(d => new ListViewItem(d, 0)).ToArray());
-            LsvFiles.Items.AddRange(Directory.GetFiles(folder).Select(f => new ListViewItem(f, 1)).ToArray());
-
-            CboPath.EndUpdate();
+            RenderFileTree();
         }
 
         private void CboPath_DropDown(object sender, EventArgs e)
@@ -69,6 +61,23 @@ namespace Metadata_Setter
                 RenderFileTree();
             }
         }
+
+        private void BtnFolderSearch_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog dialog = new FolderBrowserDialog() 
+            {
+                InitialDirectory = CboPath.Text
+            };
+            
+            DialogResult result = dialog.ShowDialog();
+
+            if (result == DialogResult.OK)
+            {
+                CboPath.Text = dialog.SelectedPath;
+                RenderFileTree();
+            }
+        }
+
         //
         // Various utility functions
         //

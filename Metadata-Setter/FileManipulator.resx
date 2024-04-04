@@ -120,6 +120,22 @@
   <metadata name="MnuOptions.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="BtnFolderSearch.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABg2lDQ1BJQ0MgcHJvZmlsZQAAKM+VkT1I
+        w0AcxV/TSou0ONhBxCFDdbKLijiWKBbBQmkrtOpgcukXNGlIUlwcBdeCgx+LVQcXZ10dXAVB8APE2cFJ
+        0UVK/F9SaBEqeOG4H+/yHnfvAKFVY5oVSACabpuZpCTmC6ti8BUB+iIIQZSZZaSyizn0HV/38PH1Ls6z
+        8L8RUYsWA3wicYIZpk28QTy7aRuc94mjrCKrxOfEkyYdkPiR64rHb5zLLgs8M2rmMvPEUWKx3MNKD7OK
+        qRHPEMdUTad8Ie+xynmLs1ZrsM45+Q3DRX0ly3WaY0hiCSmkIUJBA1XUYCNOq06KhQztS338o64/TS6F
+        XFUwciygDg2y6wd/g9/dWqXpKS8pLAEDL47zMQ4Ed4F203G+jx2nfQL4n4Erveuvt4C5T9KbXS12BAxt
+        AxfXXU3ZAy53gJEnQzZlV/LTFEol4P2MnqkADN8Cg2teb519nD4AOepq+QY4OAQmypS93ufeod7e/vzH
+        7Q/SD1YBcpsv+dudAAAACXBIWXMAAC4iAAAuIgGq4t2SAAAAB3RJTUUH6AQEDSAxgKO1EwAAABl0RVh0
+        Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABMSURBVDhPYxjc4P+fFpb///+zQzELWOz/fyYg
+        5gdiOaA8O8OVPTL/sWGwCcQAbJphGKoEP8CmERlDleEG2DSRgkcNGDUAhCk0QOY/AKrC+i/UALz8AAAA
+        AElFTkSuQmCC
+</value>
+  </data>
   <metadata name="ImgIcons.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>138, 17</value>
   </metadata>
@@ -128,7 +144,7 @@
         AAEAAAD/////AQAAAAAAAAAMAgAAAEZTeXN0ZW0uV2luZG93cy5Gb3JtcywgQ3VsdHVyZT1uZXV0cmFs
         LCBQdWJsaWNLZXlUb2tlbj1iNzdhNWM1NjE5MzRlMDg5BQEAAAAmU3lzdGVtLldpbmRvd3MuRm9ybXMu
         SW1hZ2VMaXN0U3RyZWFtZXIBAAAABERhdGEHAgIAAAAJAwAAAA8DAAAApAYAAAJNU0Z0AUkBTAIBAQIB
-        AAFoAQABaAEAARABAAEQAQAE/wEhAQAI/wFCAU0BNgcAATYDAAEoAwABQAMAARADAAEBAQABIAYAARAS
+        AAFwAQABcAEAARABAAEQAQAE/wEhAQAI/wFCAU0BNgcAATYDAAEoAwABQAMAARADAAEBAQABIAYAARAS
         AAEcAbwB1AH/ARwBvAHUAf8BHAG8AdQB/wEcAbwB1AH/ARwBvAHUAf8BHAG8AdQB/wEcAbwB1AH/ARwB
         vAHUAf8BHAG8AdQB/wEcAbwB1AH/ARwBvAHUAf8BHAG8AdQB/wEcAbwB1AH/ARwBvAHUAf8BHAG8AdQB
         /wEcAbwB1AH/wAABHAG8AdQB/wEcAbwB1AH/ARwBvAHUAf8BHAG8AdQB/wEcAbwB1AH/ARwBvAHUAf8B
