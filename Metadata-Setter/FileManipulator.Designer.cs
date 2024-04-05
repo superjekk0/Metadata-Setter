@@ -125,6 +125,7 @@
             CboMetadataList.Name = "CboMetadataList";
             CboMetadataList.Size = new Size(309, 23);
             CboMetadataList.TabIndex = 8;
+            CboMetadataList.SelectedIndexChanged += CboMetadataList_IndexChanged;
             // 
             // LstMetadataValues
             // 

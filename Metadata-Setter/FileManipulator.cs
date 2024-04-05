@@ -27,6 +27,11 @@ namespace Metadata_Setter
             CboPath.Text = repository;
 
             RenderFileTree(CboPath.Text);
+
+            CboMetadataList.Items.AddRange(new string[]
+            {
+                "Title",
+            });
         }
 
         private void MnuOptionsFileExit_Click(object sender, EventArgs e)
@@ -91,6 +96,17 @@ namespace Metadata_Setter
             }
         }
 
+        private void CboMetadataList_IndexChanged(object sender, EventArgs e)
+        {
+            List<TagLib.File> files = LsvFiles.Items.OfType<ListViewItem>()
+                .Where(i => i.ImageIndex != 0
+                && TagLib.SupportedMimeType.AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
+                .Select(i => TagLib.File.Create(i.Text))
+                .ToList();
+
+            LstMetadataValues.Items.AddRange(files.OrderBy(f => f.Tag.Track).Select(f => f.Tag.Title).ToArray());
+        }
+
         //
         // Various utility functions
         //
@@ -116,13 +132,13 @@ namespace Metadata_Setter
                 LsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d, 0)).ToArray());
                 LsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f, 1)).ToArray());
                 UpdateRepository(path);
-            } 
+            }
             catch (Exception ex)
             {
-                CboPath.Text = repository;
                 LsvFiles.Items.Clear();
                 LsvFiles.Items.AddRange(itemsBefore);
                 MessageBox.Show(ex.Message, "Directory access", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                CboPath.Text = repository;
             }
 
             CboPath.EndUpdate();
@@ -133,6 +149,5 @@ namespace Metadata_Setter
         {
             repository = path;
         }
-
     }
 }
