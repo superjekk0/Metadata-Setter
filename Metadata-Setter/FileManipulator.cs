@@ -28,10 +28,10 @@ namespace Metadata_Setter
 
             RenderFileTree(CboPath.Text);
 
-            CboMetadataList.Items.AddRange(new string[]
-            {
-                "Title",
-            });
+            //CboMetadataList.Items.AddRange(new string[]
+            //{
+            //    "Title",
+            //});
         }
 
         private void MnuOptionsFileExit_Click(object sender, EventArgs e)
@@ -179,10 +179,38 @@ namespace Metadata_Setter
                     .ToList();
             }
 
-            LstMetadataValues.Items.AddRange(files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
-                .Where(f => f != "")
-                .Distinct()
-                .ToArray());
+            LstMetadataValues.Items.AddRange(FileTags(files, CboMetadataList.Text));
+        }
+
+        private object[] FileTags(List<TagLib.File> files, string tag)
+        {
+            IEnumerable<object> result = new List<object>();
+
+            switch (tag)
+            {
+                case "Album":
+                    return files.Select(f => f.Tag.Album == null ? "" : f.Tag.Album)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case "Genre":
+                    return files.Select(f => f.Tag.FirstGenre == null ? "" : f.Tag.FirstGenre)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case "Title":
+                    return files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case "Year":
+                    return files.Select(f => f.Tag.Year.ToString())
+                        .Where(f => f != "0")
+                        .Distinct()
+                        .ToArray();
+                default:
+                    return result.ToArray();
+            }
         }
     }
 }

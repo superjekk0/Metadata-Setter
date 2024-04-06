@@ -120,7 +120,10 @@
             // 
             // CboMetadataList
             // 
+            CboMetadataList.AutoCompleteMode = AutoCompleteMode.Suggest;
+            CboMetadataList.AutoCompleteSource = AutoCompleteSource.ListItems;
             CboMetadataList.FormattingEnabled = true;
+            CboMetadataList.Items.AddRange(new object[] { "Album", "Genre", "Title", "Year" });
             CboMetadataList.Location = new Point(17, 82);
             CboMetadataList.Name = "CboMetadataList";
             CboMetadataList.Size = new Size(309, 23);
