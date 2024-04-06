@@ -162,6 +162,7 @@
             LsvFiles.TabIndex = 12;
             LsvFiles.UseCompatibleStateImageBehavior = false;
             LsvFiles.View = View.Details;
+            LsvFiles.SelectedIndexChanged += LsvFiles_SelectedIndexChanged;
             LsvFiles.MouseDoubleClick += LsvFiles_MouseDoubleClick;
             // 
             // ImgIcons

@@ -11,7 +11,7 @@ namespace Metadata_Setter
         public FrmFileManipulator()
         {
             InitializeComponent();
-            repository = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+            repository = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + '\\';
             ColumnHeader header = new ColumnHeader
             {
                 Text = "",
@@ -46,8 +46,6 @@ namespace Metadata_Setter
         {
             CboPath.BeginUpdate();
 
-            //string folder = CboPath.Text;
-            //CboPath.Items.Clear();
             foreach (var item in CboPath.Items)
             {
                 if (item.ToString() != repository)
@@ -55,7 +53,7 @@ namespace Metadata_Setter
                     CboPath.Items.Remove(item);
                 }
             }
-            CboPath.Items.AddRange(Directory.GetDirectories(repository));
+            CboPath.Items.AddRange(Directory.GetDirectories(repository).Select(d => d += '\\').ToArray());
 
             CboPath.EndUpdate();
         }
@@ -65,7 +63,8 @@ namespace Metadata_Setter
             ListViewItem target = LsvFiles.Items[LsvFiles.SelectedIndices[0]];
             if (target.ImageIndex == 0)
             {
-                CboPath.Text = target.Text;
+                CboPath.Text += target.Text + '\\';
+                
                 RenderFileTree(CboPath.Text);
             }
         }
@@ -81,7 +80,7 @@ namespace Metadata_Setter
 
             if (result == DialogResult.OK)
             {
-                CboPath.Text = dialog.SelectedPath;
+                CboPath.Text = dialog.SelectedPath + '\\';
                 RenderFileTree(CboPath.Text);
             }
         }
@@ -89,22 +88,21 @@ namespace Metadata_Setter
         private void BtnUpperFolder_Click(object sender, EventArgs e)
         {
             DirectoryInfo? parent = Directory.GetParent(repository);
-            if (parent != null)
+            if (parent != null && parent.Parent != null)
             {
-                CboPath.Text = parent.FullName;
+                CboPath.Text = parent.Parent.FullName + (parent.Root.FullName == parent.Parent.FullName ? "" : "\\");
                 RenderFileTree(CboPath.Text);
             }
         }
 
         private void CboMetadataList_IndexChanged(object sender, EventArgs e)
         {
-            List<TagLib.File> files = LsvFiles.Items.OfType<ListViewItem>()
-                .Where(i => i.ImageIndex != 0
-                && TagLib.SupportedMimeType.AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
-                .Select(i => TagLib.File.Create(i.Text))
-                .ToList();
+            UpdateTagList(LsvFiles.SelectedIndices);
+        }
 
-            LstMetadataValues.Items.AddRange(files.OrderBy(f => f.Tag.Track).Select(f => f.Tag.Title).ToArray());
+        private void LsvFiles_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateTagList(LsvFiles.SelectedIndices);
         }
 
         //
@@ -114,7 +112,9 @@ namespace Metadata_Setter
         {
             if (ActiveControl == CboPath && keyData == Keys.Enter)
             {
-                RenderFileTree(CboPath.Text);
+                RenderFileTree(CboPath.Text + 
+                    (CboPath.Text.Length - 1 == CboPath.Text.LastIndexOf('\\') ? "" : "\\"));
+                CboPath.Text = repository;
                 LsvFiles.Focus();
                 return true;
             }
@@ -129,8 +129,8 @@ namespace Metadata_Setter
             try
             {
                 LsvFiles.Items.Clear();
-                LsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d, 0)).ToArray());
-                LsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f, 1)).ToArray());
+                LsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d.Substring(d.LastIndexOf('\\') + 1), 0)).ToArray());
+                LsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f.Substring(f.LastIndexOf('\\') + 1), 1)).ToArray());
                 UpdateRepository(path);
             }
             catch (Exception ex)
@@ -143,11 +143,46 @@ namespace Metadata_Setter
 
             CboPath.EndUpdate();
 
+            UpdateTagList(LsvFiles.SelectedIndices);
         }
 
         private void UpdateRepository(string path)
         {
             repository = path;
+        }
+
+        private void UpdateTagList(ListView.SelectedIndexCollection selectedIndices)
+        {
+            if (CboMetadataList.SelectedIndex == -1)
+            {
+                return;
+            }
+
+            LstMetadataValues.Items.Clear();
+
+            List<TagLib.File> files = new List<TagLib.File>();
+            if (selectedIndices.Count != 0)
+            {
+                files = LsvFiles.Items.OfType<ListViewItem>()
+                    .Where(i => i.ImageIndex != 0
+                    && TagLib.SupportedMimeType.AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1))
+                    && selectedIndices.Contains(i.Index))
+                    .Select(i => TagLib.File.Create(repository + i.Text))
+                    .ToList();
+            }
+            else
+            {
+                files = LsvFiles.Items.OfType<ListViewItem>()
+                    .Where(i => i.ImageIndex != 0
+                    && TagLib.SupportedMimeType.AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
+                    .Select(i => TagLib.File.Create(repository + i.Text))
+                    .ToList();
+            }
+
+            LstMetadataValues.Items.AddRange(files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
+                .Where(f => f != "")
+                .Distinct()
+                .ToArray());
         }
     }
 }
