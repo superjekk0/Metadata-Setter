@@ -8,6 +8,7 @@ namespace Metadata_Setter
     public partial class FrmFileManipulator : Form
     {
         private string repository = "";
+        private List<FileDisplay> files = new List<FileDisplay>();
         public FrmFileManipulator()
         {
             InitializeComponent();
@@ -128,9 +129,16 @@ namespace Metadata_Setter
 
             try
             {
+                // It should not be necessary to make a copy of files, as if the directory
+                // does not exist, the program will already have thrown an exception.
                 LsvFiles.Items.Clear();
                 LsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d.Substring(d.LastIndexOf('\\') + 1), 0)).ToArray());
                 LsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f.Substring(f.LastIndexOf('\\') + 1), 1)).ToArray());
+                files = LsvFiles.Items.OfType<ListViewItem>()
+                    .Where(i => i.ImageIndex != 0 && TagLib.SupportedMimeType
+                    .AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
+                    .Select(i => new FileDisplay(TagLib.File.Create(path + i.Text), i.Index))
+                    .ToList();
                 UpdateRepository(path);
             }
             catch (Exception ex)
@@ -160,26 +168,20 @@ namespace Metadata_Setter
 
             LstMetadataValues.Items.Clear();
 
-            List<TagLib.File> files = new List<TagLib.File>();
+            List<TagLib.File> aimedFiles = new List<TagLib.File>();
             if (selectedIndices.Count != 0)
             {
-                files = LsvFiles.Items.OfType<ListViewItem>()
-                    .Where(i => i.ImageIndex != 0
-                    && TagLib.SupportedMimeType.AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1))
-                    && selectedIndices.Contains(i.Index))
-                    .Select(i => TagLib.File.Create(repository + i.Text))
+                aimedFiles = files
+                    .Where(f => selectedIndices.Contains(f.Index))
+                    .Select(f => f.File)
                     .ToList();
             }
             else
             {
-                files = LsvFiles.Items.OfType<ListViewItem>()
-                    .Where(i => i.ImageIndex != 0
-                    && TagLib.SupportedMimeType.AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
-                    .Select(i => TagLib.File.Create(repository + i.Text))
-                    .ToList();
+                aimedFiles = files.Select(f => f.File).ToList();
             }
 
-            LstMetadataValues.Items.AddRange(FileTags(files, CboMetadataList.Text));
+            LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
         }
 
         private object[] FileTags(List<TagLib.File> files, string tag)
