@@ -2,7 +2,6 @@
 //
 // Logiciel écrit par Charles Mandziuk, (c) 2024
 
-
 namespace Metadata_Setter
 {
     public partial class FrmFileManipulator : Form
@@ -40,9 +39,6 @@ namespace Metadata_Setter
             Close();
         }
 
-        //
-        // CboPath
-        //
         private void CboPath_DropDown(object sender, EventArgs e)
         {
             CboPath.BeginUpdate();
@@ -65,7 +61,7 @@ namespace Metadata_Setter
             if (target.ImageIndex == 0)
             {
                 CboPath.Text += target.Text + '\\';
-                
+
                 RenderFileTree(CboPath.Text);
             }
         }
@@ -81,7 +77,7 @@ namespace Metadata_Setter
 
             if (result == DialogResult.OK)
             {
-                CboPath.Text = dialog.SelectedPath + '\\';
+                CboPath.Text = dialog.SelectedPath + (dialog.SelectedPath.LastIndexOf('\\') == dialog.SelectedPath.Length - 1 ? "" : "\\");
                 RenderFileTree(CboPath.Text);
             }
         }
@@ -106,6 +102,37 @@ namespace Metadata_Setter
             UpdateTagList(LsvFiles.SelectedIndices);
         }
 
+        private void BtnMetadataChange_Click(object sender, EventArgs e)
+        {
+            if (CboMetadataList.SelectedIndex == -1)
+            {
+                return;
+            }
+            // TODO : Check if the user input is right according to the metadata type
+
+            // TODO : Parallelize the modification process while being capable of
+            // updating the progress bar
+            //Task.WaitAll(files.Select(async f => await Task.Run(() =>
+            //{
+            //    f.File.Tag.Year = uint.Parse(TxtApplyValue.Text);
+            //    f.File.Save();
+            //    Thread.Sleep(1000);
+            //})).ToArray());
+
+            // TODO : Make a switch statement to handle various metadatas
+            foreach (FileDisplay file in files)
+            {
+                file.File.Tag.Year = uint.Parse(TxtApplyValue.Text);
+                file.File.Save();
+                Thread.Sleep(100);
+                ++PrgModificationApply.Value;
+            }
+
+            MessageBox.Show("All files have been modified.", "Modification complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            PrgModificationApply.Value = PrgModificationApply.Minimum;
+            UpdateTagList(LsvFiles.SelectedIndices);
+        }
+
         //
         // Various utility functions
         //
@@ -113,7 +140,7 @@ namespace Metadata_Setter
         {
             if (ActiveControl == CboPath && keyData == Keys.Enter)
             {
-                RenderFileTree(CboPath.Text + 
+                RenderFileTree(CboPath.Text +
                     (CboPath.Text.Length - 1 == CboPath.Text.LastIndexOf('\\') ? "" : "\\"));
                 CboPath.Text = repository;
                 LsvFiles.Focus();
@@ -157,6 +184,7 @@ namespace Metadata_Setter
         private void UpdateRepository(string path)
         {
             repository = path;
+            PrgModificationApply.Maximum = files.Count;
         }
 
         private void UpdateTagList(ListView.SelectedIndexCollection selectedIndices)
@@ -214,5 +242,7 @@ namespace Metadata_Setter
                     return result.ToArray();
             }
         }
+
+
     }
 }

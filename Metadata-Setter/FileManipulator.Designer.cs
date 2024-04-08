@@ -101,6 +101,7 @@
             BtnMetadataChange.TabIndex = 5;
             BtnMetadataChange.Text = "Apply Metadata Change";
             BtnMetadataChange.UseVisualStyleBackColor = true;
+            BtnMetadataChange.Click += BtnMetadataChange_Click;
             // 
             // PrgModificationApply
             // 
