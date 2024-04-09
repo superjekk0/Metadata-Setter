@@ -50,7 +50,14 @@ namespace Metadata_Setter
                     CboPath.Items.Remove(item);
                 }
             }
-            CboPath.Items.AddRange(Directory.GetDirectories(repository).Select(d => d += '\\').ToArray());
+            try
+            {
+                CboPath.Items.AddRange(Directory.GetDirectories(repository).Select(d => d += '\\').ToArray());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Directory access", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             CboPath.EndUpdate();
         }
@@ -110,6 +117,20 @@ namespace Metadata_Setter
             }
             // TODO : Check if the user input is right according to the metadata type
 
+            Cursor.Current = Cursors.WaitCursor;
+            this.Enabled = false;
+            List<TagLib.File> aimedFiles = new List<TagLib.File>();
+            if (LsvFiles.SelectedIndices.Count != 0)
+            {
+                aimedFiles = files
+                    .Where(f => LsvFiles.SelectedIndices.Contains(f.Index))
+                    .Select(f => f.File)
+                    .ToList();
+            }
+            else
+            {
+                aimedFiles = files.Select(f => f.File).ToList();
+            }
             // TODO : Parallelize the modification process while being capable of
             // updating the progress bar
             //Task.WaitAll(files.Select(async f => await Task.Run(() =>
@@ -118,19 +139,17 @@ namespace Metadata_Setter
             //    f.File.Save();
             //    Thread.Sleep(1000);
             //})).ToArray());
-
-            // TODO : Make a switch statement to handle various metadatas
-            foreach (FileDisplay file in files)
+            foreach (TagLib.File file in aimedFiles)
             {
-                file.File.Tag.Year = uint.Parse(TxtApplyValue.Text);
-                file.File.Save();
-                Thread.Sleep(100);
+                EditFile(file);
                 ++PrgModificationApply.Value;
             }
 
+            aimedFiles.ForEach(f => f.Save());
             MessageBox.Show("All files have been modified.", "Modification complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
             PrgModificationApply.Value = PrgModificationApply.Minimum;
             UpdateTagList(LsvFiles.SelectedIndices);
+            this.Enabled = true;
         }
 
         //
@@ -243,6 +262,25 @@ namespace Metadata_Setter
             }
         }
 
-
+        private void EditFile(TagLib.File file)
+        {
+            switch (CboMetadataList.Text)
+            {
+                case "Title":
+                    file.Tag.Title = TxtApplyValue.Text;
+                    break;
+                case "Album":
+                    file.Tag.Album = TxtApplyValue.Text;
+                    break;
+                case "Genre":
+                    file.Tag.Genres = new string[] { TxtApplyValue.Text };
+                    break;
+                case "Year":
+                    file.Tag.Year = uint.Parse(TxtApplyValue.Text);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }
