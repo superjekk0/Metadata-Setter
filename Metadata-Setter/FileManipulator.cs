@@ -2,6 +2,8 @@
 //
 // Logiciel écrit par Charles Mandziuk, (c) 2024
 
+using System.Text.RegularExpressions;
+
 namespace Metadata_Setter
 {
     public partial class FrmFileManipulator : Form
@@ -115,7 +117,12 @@ namespace Metadata_Setter
             {
                 return;
             }
-            // TODO : Check if the user input is right according to the metadata type
+
+            if (!ValidInput())
+            {
+                MessageBox.Show(string.Format("'{0}' is not a valid value for '{1}'", TxtApplyValue.Text, CboMetadataList.Text), "Wrong value", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
             Cursor.Current = Cursors.WaitCursor;
             this.Enabled = false;
@@ -215,7 +222,7 @@ namespace Metadata_Setter
 
             LstMetadataValues.Items.Clear();
 
-            List<TagLib.File> aimedFiles = new List<TagLib.File>();
+            List<TagLib.File> aimedFiles;
             if (selectedIndices.Count != 0)
             {
                 aimedFiles = files
@@ -281,6 +288,25 @@ namespace Metadata_Setter
                 default:
                     break;
             }
+        }
+
+        private bool ValidInput()
+        {
+            switch (CboMetadataList.Text)
+            {
+                case "Title":
+                    return true;
+                case "Album":
+                    return true;
+                case "Genre":
+                    return true;
+                case "Year":
+                    return Regex.IsMatch(TxtApplyValue.Text, "^\\d{1,4}$");
+                default:
+                    break;
+
+            }
+            return false;
         }
     }
 }
