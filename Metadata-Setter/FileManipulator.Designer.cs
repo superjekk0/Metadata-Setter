@@ -45,7 +45,9 @@
             LsvFiles = new ListView();
             ImgIcons = new ImageList(components);
             BtnUpperFolder = new Button();
+            NumNumberValues = new NumericUpDown();
             MnuOptions.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)NumNumberValues).BeginInit();
             SuspendLayout();
             // 
             // MnuOptions
@@ -188,11 +190,20 @@
             BtnUpperFolder.UseVisualStyleBackColor = true;
             BtnUpperFolder.Click += BtnUpperFolder_Click;
             // 
+            // NumNumberValues
+            // 
+            NumNumberValues.Location = new Point(39, 152);
+            NumNumberValues.Name = "NumNumberValues";
+            NumNumberValues.Size = new Size(265, 23);
+            NumNumberValues.TabIndex = 14;
+            NumNumberValues.Visible = false;
+            // 
             // FrmFileManipulator
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 482);
+            Controls.Add(NumNumberValues);
             Controls.Add(BtnUpperFolder);
             Controls.Add(LsvFiles);
             Controls.Add(LblNewValue);
@@ -208,8 +219,10 @@
             MainMenuStrip = MnuOptions;
             Name = "FrmFileManipulator";
             Text = "Metadata File Manipulator";
+            Click += This_Click;
             MnuOptions.ResumeLayout(false);
             MnuOptions.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)NumNumberValues).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -230,5 +243,6 @@
         private ListView LsvFiles;
         private ImageList ImgIcons;
         private Button BtnUpperFolder;
+        private NumericUpDown NumNumberValues;
     }
 }

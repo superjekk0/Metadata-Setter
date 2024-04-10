@@ -104,10 +104,12 @@ namespace Metadata_Setter
         private void CboMetadataList_IndexChanged(object sender, EventArgs e)
         {
             UpdateTagList(LsvFiles.SelectedIndices);
+            DisplayMetadataContext();
         }
 
         private void LsvFiles_SelectedIndexChanged(object sender, EventArgs e)
         {
+            PrgModificationApply.Maximum = (LsvFiles.SelectedIndices.Count == 0 ? files.Count : LsvFiles.SelectedIndices.Count);
             UpdateTagList(LsvFiles.SelectedIndices);
         }
 
@@ -157,6 +159,11 @@ namespace Metadata_Setter
             PrgModificationApply.Value = PrgModificationApply.Minimum;
             UpdateTagList(LsvFiles.SelectedIndices);
             this.Enabled = true;
+        }
+
+        private void This_Click(object sender, EventArgs e)
+        {
+            LsvFiles.SelectedIndices.Clear();
         }
 
         //
@@ -283,7 +290,7 @@ namespace Metadata_Setter
                     file.Tag.Genres = new string[] { TxtApplyValue.Text };
                     break;
                 case "Year":
-                    file.Tag.Year = uint.Parse(TxtApplyValue.Text);
+                    file.Tag.Year = (uint) NumNumberValues.Value;
                     break;
                 default:
                     break;
@@ -295,18 +302,36 @@ namespace Metadata_Setter
             switch (CboMetadataList.Text)
             {
                 case "Title":
-                    return true;
                 case "Album":
-                    return true;
                 case "Genre":
                     return true;
                 case "Year":
-                    return Regex.IsMatch(TxtApplyValue.Text, "^\\d{1,4}$");
+                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 9999;
                 default:
                     break;
 
             }
             return false;
+        }
+
+        private void DisplayMetadataContext()
+        {
+            switch (CboMetadataList.Text)
+            {
+                case "Title":
+                case "Album":
+                case "Genre":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.Visible = true;
+                    break;
+                case "Year":
+                    NumNumberValues.Visible = true;
+                    NumNumberValues.Minimum = 0;
+                    NumNumberValues.Maximum = 9999;
+                    NumNumberValues.Value = 2000;
+                    TxtApplyValue.Visible = false;
+                    break;
+            }
         }
     }
 }
