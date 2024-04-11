@@ -163,6 +163,7 @@ namespace Metadata_Setter
         private void This_Click(object sender, EventArgs e)
         {
             LsvFiles.SelectedIndices.Clear();
+            this.ActiveControl = null;
         }
 
         //
@@ -227,9 +228,11 @@ namespace Metadata_Setter
         {
             if (CboMetadataList.SelectedIndex == -1)
             {
+                BtnMetadataChange.Enabled = false;
                 return;
             }
 
+            BtnMetadataChange.Enabled = true;
             LstMetadataValues.Items.Clear();
 
             List<TagLib.File> aimedFiles;
@@ -239,6 +242,7 @@ namespace Metadata_Setter
                     .Where(f => selectedIndices.Contains(f.Index))
                     .Select(f => f.File)
                     .ToList();
+                BtnMetadataChange.Enabled = aimedFiles.Count != 0;
             }
             else
             {
@@ -258,13 +262,13 @@ namespace Metadata_Setter
                         .Distinct()
                         .ToArray();
                 case "Album Artists":
-                    return files.Select(f => f.Tag.AlbumArtists)
-                        .Where(f => f.Length != 0)
+                    return files.Select(f => new AttributeArray<string>(f.Tag.AlbumArtists))
+                        .Where(f => f.Array.Length != 0)
                         .Distinct()
                         .ToArray();
                 case "Genre":
-                    return files.Select(f => f.Tag.FirstGenre == null ? "" : f.Tag.FirstGenre)
-                        .Where(f => f != "")
+                    return files.Select(f => new AttributeArray<string>(f.Tag.Genres))
+                        .Where(f => f.Array.Length != 0)
                         .Distinct()
                         .ToArray();
                 case "Title":
@@ -292,8 +296,11 @@ namespace Metadata_Setter
                 case "Album":
                     file.Tag.Album = TxtApplyValue.Text;
                     break;
+                case "Album Artists":
+                    file.Tag.AlbumArtists = TxtApplyValue.Text.Split(';');
+                    break;
                 case "Genre":
-                    file.Tag.Genres = new string[] { TxtApplyValue.Text };
+                    file.Tag.Genres = TxtApplyValue.Text.Split(';');
                     break;
                 case "Year":
                     file.Tag.Year = (uint) NumNumberValues.Value;
@@ -309,6 +316,7 @@ namespace Metadata_Setter
             {
                 case "Title":
                 case "Album":
+                case "Album Artists":
                 case "Genre":
                     return true;
                 case "Year":
@@ -325,8 +333,18 @@ namespace Metadata_Setter
             {
                 case "Title":
                 case "Album":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.Visible = true;
+                    TxtApplyValue.PlaceholderText = CboMetadataList.Text;
+                    break;
+                case "Album Artists":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Artist1;Artist2";
+                    TxtApplyValue.Visible = true;
+                    break;
                 case "Genre":
                     NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Genre1;Genre2";
                     TxtApplyValue.Visible = true;
                     break;
                 case "Year":

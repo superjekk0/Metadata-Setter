@@ -194,7 +194,7 @@
             // 
             // NumNumberValues
             // 
-            NumNumberValues.Location = new Point(39, 152);
+            NumNumberValues.Location = new Point(39, 151);
             NumNumberValues.Name = "NumNumberValues";
             NumNumberValues.Size = new Size(265, 23);
             NumNumberValues.TabIndex = 14;
