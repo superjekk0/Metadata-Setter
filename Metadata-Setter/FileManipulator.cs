@@ -2,8 +2,6 @@
 //
 // Logiciel écrit par Charles Mandziuk, (c) 2024
 
-using System.Text.RegularExpressions;
-
 namespace Metadata_Setter
 {
     public partial class FrmFileManipulator : Form
@@ -12,6 +10,7 @@ namespace Metadata_Setter
         private List<FileDisplay> files = new List<FileDisplay>();
         public FrmFileManipulator()
         {
+            // TODO : Localize the Winform
             InitializeComponent();
             repository = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + '\\';
             ColumnHeader header = new ColumnHeader
@@ -171,7 +170,11 @@ namespace Metadata_Setter
         //
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (ActiveControl == CboPath && keyData == Keys.Enter)
+            if (ActiveControl == CboMetadataList)
+            {
+                CboMetadataList.DroppedDown = false;
+            }
+            else if (ActiveControl == CboPath && keyData == Keys.Enter)
             {
                 RenderFileTree(CboPath.Text +
                     (CboPath.Text.Length - 1 == CboPath.Text.LastIndexOf('\\') ? "" : "\\"));
@@ -247,13 +250,16 @@ namespace Metadata_Setter
 
         private object[] FileTags(List<TagLib.File> files, string tag)
         {
-            IEnumerable<object> result = new List<object>();
-
             switch (tag)
             {
                 case "Album":
                     return files.Select(f => f.Tag.Album == null ? "" : f.Tag.Album)
                         .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case "Album Artists":
+                    return files.Select(f => f.Tag.AlbumArtists)
+                        .Where(f => f.Length != 0)
                         .Distinct()
                         .ToArray();
                 case "Genre":
@@ -272,7 +278,7 @@ namespace Metadata_Setter
                         .Distinct()
                         .ToArray();
                 default:
-                    return result.ToArray();
+                    return Array.Empty<object>();
             }
         }
 
@@ -309,7 +315,6 @@ namespace Metadata_Setter
                     return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 9999;
                 default:
                     break;
-
             }
             return false;
         }
