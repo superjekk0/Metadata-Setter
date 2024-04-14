@@ -158,6 +158,7 @@ namespace Metadata_Setter
             PrgModificationApply.Value = PrgModificationApply.Minimum;
             UpdateTagList(LsvFiles.SelectedIndices);
             this.Enabled = true;
+            BtnMetadataChange.Enabled = false;
         }
 
         private void This_Click(object sender, EventArgs e)
@@ -232,7 +233,6 @@ namespace Metadata_Setter
                 return;
             }
 
-            BtnMetadataChange.Enabled = true;
             LstMetadataValues.Items.Clear();
 
             List<TagLib.File> aimedFiles;
@@ -242,7 +242,6 @@ namespace Metadata_Setter
                     .Where(f => selectedIndices.Contains(f.Index))
                     .Select(f => f.File)
                     .ToList();
-                BtnMetadataChange.Enabled = aimedFiles.Count != 0;
             }
             else
             {
@@ -250,6 +249,7 @@ namespace Metadata_Setter
             }
 
             LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
+            BtnMetadataChange.Enabled = aimedFiles.Count != 0;
         }
 
         private object[] FileTags(List<TagLib.File> files, string tag)
