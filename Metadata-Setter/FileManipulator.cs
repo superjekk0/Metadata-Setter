@@ -281,6 +281,41 @@ namespace Metadata_Setter
                         .Where(f => f != "0")
                         .Distinct()
                         .ToArray();
+                case "Beats per Minute":
+                    return files.Select(f => f.Tag.BeatsPerMinute.ToString())
+                        .Where(f => f != "0")
+                        .Distinct()
+                        .ToArray();
+                case "Amazon ID":
+                    return files.Select(f => f.Tag.AmazonId == null ? "" : f.Tag.AmazonId)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case "Comment":
+                    return files.Select(f => f.Tag.Comment == null ? "" : f.Tag.Comment)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case "Composers":
+                    return files.Select(f => new AttributeArray<string>(f.Tag.Composers))
+                        .Where(f => f.Array.Length != 0)
+                        .Distinct()
+                        .ToArray();
+                case "Composers Sort":
+                    return files.Select(f => new AttributeArray<string>(f.Tag.ComposersSort))
+                        .Where(f => f.Array.Length != 0)
+                        .Distinct()
+                        .ToArray();
+                case "Conductor":
+                    return files.Select(f => f.Tag.Conductor == null ? "" : f.Tag.Conductor)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case "Copyright":
+                    return files.Select(f => f.Tag.Copyright == null ? "" : f.Tag.Copyright)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 default:
                     return Array.Empty<object>();
             }
@@ -305,6 +340,27 @@ namespace Metadata_Setter
                 case "Year":
                     file.Tag.Year = (uint) NumNumberValues.Value;
                     break;
+                case "Beats per Minute":
+                    file.Tag.BeatsPerMinute = (uint) NumNumberValues.Value;
+                    break;
+                case "Amazon ID":
+                    file.Tag.AmazonId = TxtApplyValue.Text;
+                    break;
+                case "Comment":
+                    file.Tag.Comment = TxtApplyValue.Text;
+                    break;
+                case "Composers":
+                    file.Tag.Composers = TxtApplyValue.Text.Split(';');
+                    break;
+                case "Composers Sort":
+                    file.Tag.ComposersSort = TxtApplyValue.Text.Split(';');
+                    break;
+                case "Conductor":
+                    file.Tag.Conductor = TxtApplyValue.Text;
+                    break;
+                case "Copyright":
+                    file.Tag.Copyright = TxtApplyValue.Text;
+                    break;
                 default:
                     break;
             }
@@ -318,9 +374,18 @@ namespace Metadata_Setter
                 case "Album":
                 case "Album Artists":
                 case "Genre":
+                case "Amazon ID":
+                case "Comment":
+                case "Composers":
+                case "Composers Sort":
+                case "Conductor":
+                case "Copyright":
                     return true;
                 case "Year":
                     return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 9999;
+                case "Beats per Minute":
+                    // A beat is rarely above 500 BPM. To be fair, most metronomes don't go over 500
+                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 500;    
                 default:
                     break;
             }
@@ -334,12 +399,49 @@ namespace Metadata_Setter
                 case "Title":
                 case "Album":
                     NumNumberValues.Visible = false;
-                    TxtApplyValue.Visible = true;
                     TxtApplyValue.PlaceholderText = CboMetadataList.Text;
+                    TxtApplyValue.Visible = true;
                     break;
                 case "Album Artists":
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "Artist1;Artist2";
+                    TxtApplyValue.Visible = true;
+                    break;
+                case "Amazon ID":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Amazon ID";
+                    TxtApplyValue.Visible = true;
+                    break;
+                case "Beats per Minute":
+                    TxtApplyValue.Visible = false;
+                    NumNumberValues.Minimum = 0;
+                    NumNumberValues.Maximum = 500;
+                    NumNumberValues.Value = 120;
+                    NumNumberValues.Visible = true;
+                    break;
+                case "Comment":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "This is a sample comment";
+                    TxtApplyValue.Visible = true;
+                    break;
+                case "Composers":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Composer1;Composer2";
+                    TxtApplyValue.Visible = true;
+                    break;
+                case "Composers Sort":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Composer1;Composer2";
+                    TxtApplyValue.Visible = true;
+                    break;
+                case "Conductor":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "John Smith";
+                    TxtApplyValue.Visible = true;
+                    break;
+                case "Copyright":
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Record label company";
                     TxtApplyValue.Visible = true;
                     break;
                 case "Genre":
