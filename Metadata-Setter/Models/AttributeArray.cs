@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Metadata_Setter
+namespace Metadata_Setter.Models
 {
     public class AttributeArray<T> where T : class
     {
@@ -58,7 +58,7 @@ namespace Metadata_Setter
 
         public override int GetHashCode()
         {
-            return this.ToString().GetHashCode();
+            return ToString().GetHashCode();
         }
     }
 }

@@ -2,6 +2,10 @@
 //
 // Logiciel écrit par Charles Mandziuk, (c) 2024
 
+using Metadata_Setter.Models;
+using System.ComponentModel;
+using System.Reflection;
+
 namespace Metadata_Setter
 {
     public partial class FrmFileManipulator : Form
@@ -28,11 +32,18 @@ namespace Metadata_Setter
             CboPath.Text = repository;
 
             RenderFileTree(CboPath.Text);
-
-            //CboMetadataList.Items.AddRange(new string[]
-            //{
-            //    "Title",
-            //});
+            // This part will be usefull for translation
+            CboMetadataList.DataSource = Enum.GetValues(typeof(TagName))
+                .Cast<TagName>()
+                .Select(t => new TagDisplay
+                {
+                    Description = (Attribute.GetCustomAttribute(t.GetType().GetField(t.ToString()), typeof(DescriptionAttribute)) as DescriptionAttribute)?.Description ?? t.ToString()
+                        , Value = t.ToString()
+                }
+                )
+                .ToArray();
+            CboMetadataList.DisplayMember = "Description";
+            CboMetadataList.ValueMember = "Value";
         }
 
         private void MnuOptionsFileExit_Click(object sender, EventArgs e)
@@ -252,114 +263,203 @@ namespace Metadata_Setter
             BtnMetadataChange.Enabled = aimedFiles.Count != 0;
         }
 
+        private TagName ExtractTagName(string tag)
+        {
+            try
+            {
+                return Enum.Parse<TagName>((CboMetadataList.SelectedItem as TagDisplay).Value);
+            }
+            catch (Exception)
+            {
+                return (TagName) (-1);
+            }
+        }
+
         private object[] FileTags(List<TagLib.File> files, string tag)
         {
-            switch (tag)
+            switch (ExtractTagName(tag))
             {
-                case "Album":
+                case TagName.Album:
                     return files.Select(f => f.Tag.Album == null ? "" : f.Tag.Album)
                         .Where(f => f != "")
                         .Distinct()
                         .ToArray();
-                case "Album Artists":
+                case TagName.AlbumArtists:
                     return files.Select(f => new AttributeArray<string>(f.Tag.AlbumArtists))
                         .Where(f => f.Array.Length != 0)
                         .Distinct()
                         .ToArray();
-                case "Genre":
-                    return files.Select(f => new AttributeArray<string>(f.Tag.Genres))
-                        .Where(f => f.Array.Length != 0)
-                        .Distinct()
-                        .ToArray();
-                case "Title":
-                    return files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
-                        .Where(f => f != "")
-                        .Distinct()
-                        .ToArray();
-                case "Year":
-                    return files.Select(f => f.Tag.Year.ToString())
-                        .Where(f => f != "0")
-                        .Distinct()
-                        .ToArray();
-                case "Beats per Minute":
-                    return files.Select(f => f.Tag.BeatsPerMinute.ToString())
-                        .Where(f => f != "0")
-                        .Distinct()
-                        .ToArray();
-                case "Amazon ID":
+                case TagName.AmazonID:
                     return files.Select(f => f.Tag.AmazonId == null ? "" : f.Tag.AmazonId)
                         .Where(f => f != "")
                         .Distinct()
                         .ToArray();
-                case "Comment":
+                case TagName.Artists:
+                    break;
+                case TagName.BeatsPerMinute:
+                    return files.Select(f => f.Tag.BeatsPerMinute.ToString())
+                        .Where(f => f != "0")
+                        .Distinct()
+                        .ToArray();
+                case TagName.Comment:
                     return files.Select(f => f.Tag.Comment == null ? "" : f.Tag.Comment)
                         .Where(f => f != "")
                         .Distinct()
                         .ToArray();
-                case "Composers":
+                case TagName.Composers:
                     return files.Select(f => new AttributeArray<string>(f.Tag.Composers))
                         .Where(f => f.Array.Length != 0)
                         .Distinct()
                         .ToArray();
-                case "Composers Sort":
+                case TagName.ComposersSort:
                     return files.Select(f => new AttributeArray<string>(f.Tag.ComposersSort))
                         .Where(f => f.Array.Length != 0)
                         .Distinct()
                         .ToArray();
-                case "Conductor":
+                case TagName.Conductor:
                     return files.Select(f => f.Tag.Conductor == null ? "" : f.Tag.Conductor)
                         .Where(f => f != "")
                         .Distinct()
                         .ToArray();
-                case "Copyright":
+                case TagName.Copyright:
                     return files.Select(f => f.Tag.Copyright == null ? "" : f.Tag.Copyright)
                         .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case TagName.Description:
+                    break;
+                case TagName.Disc:
+                    break;
+                case TagName.DiscCount:
+                    break;
+                case TagName.Genre:
+                    return files.Select(f => new AttributeArray<string>(f.Tag.Genres))
+                        .Where(f => f.Array.Length != 0)
+                        .Distinct()
+                        .ToArray();
+                case TagName.Grouping:
+                    break;
+                case TagName.InitialKey:
+                    break;
+                case TagName.ISRC:
+                    break;
+                case TagName.Lenght:
+                    break;
+                case TagName.Lyrics:
+                    break;
+                case TagName.Performers:
+                    break;
+                case TagName.PerformersSort:
+                    break;
+                case TagName.PerformersRole:
+                    break;
+                case TagName.Pictures:
+                    break;
+                case TagName.Publisher:
+                    break;
+                case TagName.RemixedBy:
+                    break;
+                case TagName.Subtitle:
+                    break;
+                case TagName.Title:
+                    return files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
+                case TagName.TitleSort:
+                    break;
+                case TagName.Track:
+                    break;
+                case TagName.TrackCount:
+                    break;
+                case TagName.Year:
+                    return files.Select(f => f.Tag.Year.ToString())
+                        .Where(f => f != "0")
                         .Distinct()
                         .ToArray();
                 default:
                     return Array.Empty<object>();
             }
+            return Array.Empty<object>();
         }
 
         private void EditFile(TagLib.File file)
         {
-            switch (CboMetadataList.Text)
+            switch (ExtractTagName(CboMetadataList.Text))
             {
-                case "Title":
-                    file.Tag.Title = TxtApplyValue.Text;
-                    break;
-                case "Album":
+                case TagName.Album:
                     file.Tag.Album = TxtApplyValue.Text;
                     break;
-                case "Album Artists":
+                case TagName.AlbumArtists:
                     file.Tag.AlbumArtists = TxtApplyValue.Text.Split(';');
                     break;
-                case "Genre":
-                    file.Tag.Genres = TxtApplyValue.Text.Split(';');
-                    break;
-                case "Year":
-                    file.Tag.Year = (uint) NumNumberValues.Value;
-                    break;
-                case "Beats per Minute":
-                    file.Tag.BeatsPerMinute = (uint) NumNumberValues.Value;
-                    break;
-                case "Amazon ID":
+                case TagName.AmazonID:
                     file.Tag.AmazonId = TxtApplyValue.Text;
                     break;
-                case "Comment":
+                case TagName.Artists:
+                    break;
+                case TagName.BeatsPerMinute:
+                    file.Tag.BeatsPerMinute = (uint)NumNumberValues.Value;
+                    break;
+                case TagName.Comment:
                     file.Tag.Comment = TxtApplyValue.Text;
                     break;
-                case "Composers":
+                case TagName.Composers:
                     file.Tag.Composers = TxtApplyValue.Text.Split(';');
                     break;
-                case "Composers Sort":
+                case TagName.ComposersSort:
                     file.Tag.ComposersSort = TxtApplyValue.Text.Split(';');
                     break;
-                case "Conductor":
+                case TagName.Conductor:
                     file.Tag.Conductor = TxtApplyValue.Text;
                     break;
-                case "Copyright":
+                case TagName.Copyright:
                     file.Tag.Copyright = TxtApplyValue.Text;
+                    break;
+                case TagName.Description:
+                    break;
+                case TagName.Disc:
+                    break;
+                case TagName.DiscCount:
+                    break;
+                case TagName.Genre:
+                    file.Tag.Genres = TxtApplyValue.Text.Split(';');
+                    break;
+                case TagName.Grouping:
+                    break;
+                case TagName.InitialKey:
+                    break;
+                case TagName.ISRC:
+                    break;
+                case TagName.Lenght:
+                    break;
+                case TagName.Lyrics:
+                    break;
+                case TagName.Performers:
+                    break;
+                case TagName.PerformersSort:
+                    break;
+                case TagName.PerformersRole:
+                    break;
+                case TagName.Pictures:
+                    break;
+                case TagName.Publisher:
+                    break;
+                case TagName.RemixedBy:
+                    break;
+                case TagName.Subtitle:
+                    break;
+                case TagName.Title:
+                    file.Tag.Title = TxtApplyValue.Text;
+                    break;
+                case TagName.TitleSort:
+                    break;
+                case TagName.Track:
+                    break;
+                case TagName.TrackCount:
+                    break;
+                case TagName.Year:
+                    file.Tag.Year = (uint)NumNumberValues.Value;
                     break;
                 default:
                     break;
@@ -368,93 +468,174 @@ namespace Metadata_Setter
 
         private bool ValidInput()
         {
-            switch (CboMetadataList.Text)
+            switch (ExtractTagName(CboMetadataList.Text))
             {
-                case "Title":
-                case "Album":
-                case "Album Artists":
-                case "Genre":
-                case "Amazon ID":
-                case "Comment":
-                case "Composers":
-                case "Composers Sort":
-                case "Conductor":
-                case "Copyright":
+                case TagName.Album:
+                case TagName.AlbumArtists:
+                case TagName.AmazonID:
+                case TagName.Artists:
                     return true;
-                case "Year":
-                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 9999;
-                case "Beats per Minute":
-                    // A beat is rarely above 500 BPM. To be fair, most metronomes don't go over 500
-                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 500;    
-                default:
+                case TagName.BeatsPerMinute:
+                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 500;
+                case TagName.Comment:
+                case TagName.Composers:
+                case TagName.ComposersSort:
+                case TagName.Conductor:
+                case TagName.Copyright:
+                    return true;
+                case TagName.Description:
+                case TagName.Disc:
                     break;
+                case TagName.DiscCount:
+                    break;
+                case TagName.Genre:
+                    return true;
+                case TagName.Grouping:
+                    break;
+                case TagName.InitialKey:
+                    break;
+                case TagName.ISRC:
+                    break;
+                case TagName.Lenght:
+                    break;
+                case TagName.Lyrics:
+                    break;
+                case TagName.Performers:
+                    break;
+                case TagName.PerformersSort:
+                    break;
+                case TagName.PerformersRole:
+                    break;
+                case TagName.Pictures:
+                    break;
+                case TagName.Publisher:
+                    break;
+                case TagName.RemixedBy:
+                    break;
+                case TagName.Subtitle:
+                    break;
+                case TagName.Title:
+                    break;
+                case TagName.TitleSort:
+                    break;
+                case TagName.Track:
+                    break;
+                case TagName.TrackCount:
+                    break;
+                case TagName.Year:
+                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 9999;
+                default:
+                    return false;
             }
             return false;
         }
 
         private void DisplayMetadataContext()
         {
-            switch (CboMetadataList.Text)
+            switch (ExtractTagName(CboMetadataList.Text))
             {
-                case "Title":
-                case "Album":
+                case TagName.Album:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = CboMetadataList.Text;
                     TxtApplyValue.Visible = true;
                     break;
-                case "Album Artists":
+                case TagName.AlbumArtists:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "Artist1;Artist2";
                     TxtApplyValue.Visible = true;
                     break;
-                case "Amazon ID":
+                case TagName.AmazonID:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "Amazon ID";
                     TxtApplyValue.Visible = true;
                     break;
-                case "Beats per Minute":
+                case TagName.Artists:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Artist1;Artist2";
+                    TxtApplyValue.Visible = true;
+                    break;
+                case TagName.BeatsPerMinute:
                     TxtApplyValue.Visible = false;
                     NumNumberValues.Minimum = 0;
                     NumNumberValues.Maximum = 500;
                     NumNumberValues.Value = 120;
                     NumNumberValues.Visible = true;
                     break;
-                case "Comment":
+                case TagName.Comment:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "This is a sample comment";
                     TxtApplyValue.Visible = true;
                     break;
-                case "Composers":
+                case TagName.Composers:
+                case TagName.ComposersSort:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "Composer1;Composer2";
                     TxtApplyValue.Visible = true;
                     break;
-                case "Composers Sort":
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Composer1;Composer2";
-                    TxtApplyValue.Visible = true;
-                    break;
-                case "Conductor":
+                case TagName.Conductor:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "John Smith";
                     TxtApplyValue.Visible = true;
                     break;
-                case "Copyright":
+                case TagName.Copyright:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "Record label company";
                     TxtApplyValue.Visible = true;
                     break;
-                case "Genre":
+                case TagName.Description:
+                    break;
+                case TagName.Disc:
+                    break;
+                case TagName.DiscCount:
+                    break;
+                case TagName.Genre:
                     NumNumberValues.Visible = false;
                     TxtApplyValue.PlaceholderText = "Genre1;Genre2";
                     TxtApplyValue.Visible = true;
                     break;
-                case "Year":
+                case TagName.Grouping:
+                    break;
+                case TagName.InitialKey:
+                    break;
+                case TagName.ISRC:
+                    break;
+                case TagName.Lenght:
+                    break;
+                case TagName.Lyrics:
+                    break;
+                case TagName.Performers:
+                    break;
+                case TagName.PerformersSort:
+                    break;
+                case TagName.PerformersRole:
+                    break;
+                case TagName.Pictures:
+                    break;
+                case TagName.Publisher:
+                    break;
+                case TagName.RemixedBy:
+                    break;
+                case TagName.Subtitle:
+                    break;
+                case TagName.Title:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = CboMetadataList.Text;
+                    TxtApplyValue.Visible = true;
+                    break;
+                case TagName.TitleSort:
+                    break;
+                case TagName.Track:
+                    break;
+                case TagName.TrackCount:
+                    break;
+                case TagName.Year:
                     NumNumberValues.Visible = true;
                     NumNumberValues.Minimum = 0;
                     NumNumberValues.Maximum = 9999;
                     NumNumberValues.Value = 2000;
                     TxtApplyValue.Visible = false;
+                    break;
+                default:
                     break;
             }
         }

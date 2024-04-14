@@ -128,7 +128,6 @@
             CboMetadataList.AutoCompleteSource = AutoCompleteSource.ListItems;
             CboMetadataList.FormattingEnabled = true;
             CboMetadataList.IntegralHeight = false;
-            CboMetadataList.Items.AddRange(new object[] { "Album", "Album Artists", "Artists", "Beats per Minute", "Amazon ID", "Comment", "Composers", "Composers Sort", "Conductor", "Copyright", "Description", "Disc", "Disc Count", "Genre", "Grouping", "Initial Key", "ISRC", "Lenght", "Lyrics", "Performers", "Performers Sort", "Performers Role", "Pictures", "Publisher", "Remixed By", "Subtitle", "Title", "Title Sort", "Track", "Track Count", "Year" });
             CboMetadataList.Location = new Point(17, 82);
             CboMetadataList.Name = "CboMetadataList";
             CboMetadataList.Size = new Size(309, 23);
