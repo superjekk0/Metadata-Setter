@@ -39,13 +39,13 @@
             PrgModificationApply = new ProgressBar();
             LblSelectMetadata = new Label();
             CboMetadataList = new ComboBox();
-            LstMetadataValues = new ListBox();
             TxtApplyValue = new TextBox();
             LblNewValue = new Label();
             LsvFiles = new ListView();
             ImgIcons = new ImageList(components);
             BtnUpperFolder = new Button();
             NumNumberValues = new NumericUpDown();
+            lsvMetadataValues = new ListView();
             MnuOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)NumNumberValues).BeginInit();
             SuspendLayout();
@@ -134,16 +134,6 @@
             CboMetadataList.TabIndex = 8;
             CboMetadataList.SelectedIndexChanged += CboMetadataList_IndexChanged;
             // 
-            // LstMetadataValues
-            // 
-            LstMetadataValues.FormattingEnabled = true;
-            LstMetadataValues.ItemHeight = 15;
-            LstMetadataValues.Location = new Point(39, 180);
-            LstMetadataValues.Name = "LstMetadataValues";
-            LstMetadataValues.SelectionMode = SelectionMode.None;
-            LstMetadataValues.Size = new Size(265, 244);
-            LstMetadataValues.TabIndex = 9;
-            // 
             // TxtApplyValue
             // 
             TxtApplyValue.Location = new Point(39, 151);
@@ -199,17 +189,26 @@
             NumNumberValues.TabIndex = 14;
             NumNumberValues.Visible = false;
             // 
+            // lsvMetadataValues
+            // 
+            lsvMetadataValues.Location = new Point(39, 193);
+            lsvMetadataValues.Name = "lsvMetadataValues";
+            lsvMetadataValues.Size = new Size(265, 231);
+            lsvMetadataValues.TabIndex = 15;
+            lsvMetadataValues.UseCompatibleStateImageBehavior = false;
+            lsvMetadataValues.View = View.Details;
+            // 
             // FrmFileManipulator
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 482);
+            Controls.Add(lsvMetadataValues);
             Controls.Add(NumNumberValues);
             Controls.Add(BtnUpperFolder);
             Controls.Add(LsvFiles);
             Controls.Add(LblNewValue);
             Controls.Add(TxtApplyValue);
-            Controls.Add(LstMetadataValues);
             Controls.Add(CboMetadataList);
             Controls.Add(LblSelectMetadata);
             Controls.Add(PrgModificationApply);
@@ -238,12 +237,12 @@
         private ProgressBar PrgModificationApply;
         private Label LblSelectMetadata;
         private ComboBox CboMetadataList;
-        private ListBox LstMetadataValues;
         private TextBox TxtApplyValue;
         private Label LblNewValue;
         private ListView LsvFiles;
         private ImageList ImgIcons;
         private Button BtnUpperFolder;
         private NumericUpDown NumNumberValues;
+        private ListView lsvMetadataValues;
     }
 }

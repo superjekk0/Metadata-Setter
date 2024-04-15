@@ -18,15 +18,13 @@ namespace Metadata_Setter
             // TODO : Localize the Winform
             InitializeComponent();
             repository = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + '\\';
-            ColumnHeader header = new ColumnHeader
-            {
-                Text = "",
-                Name = "Type",
-                Width = LsvFiles.Width
-            };
 
-            LsvFiles.Columns.Add(header);
+            LsvFiles.Columns.Add("", "Type", LsvFiles.Width);
             LsvFiles.HeaderStyle = ColumnHeaderStyle.None;
+
+            lsvMetadataValues.Columns.Add("Data", "Data", lsvMetadataValues.Width);
+            lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
+            lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
 
             CboPath.Items.Add(repository);
             CboPath.Items.AddRange(Directory.GetDirectories(repository).OrderBy(f => f).ToArray());
@@ -245,7 +243,8 @@ namespace Metadata_Setter
                 return;
             }
 
-            LstMetadataValues.Items.Clear();
+            //LstMetadataValues.Items.Clear();
+            lsvMetadataValues.Items.Clear();
 
             List<TagLib.File> aimedFiles;
             if (selectedIndices.Count != 0)
@@ -260,7 +259,9 @@ namespace Metadata_Setter
                 aimedFiles = files.Select(f => f.File).ToList();
             }
 
-            LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
+            //LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
+            lsvMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text)
+                .Select(f => new ListViewItem(f.ToString())).ToArray());
             BtnMetadataChange.Enabled = aimedFiles.Count != 0;
         }
 
@@ -281,105 +282,105 @@ namespace Metadata_Setter
             switch (ExtractTagName(tag))
             {
                 case TagName.Album:
-                    return files.Select(f => f.Tag.Album == null ? "" : f.Tag.Album)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Album != null)
+                        .Select(f => f.Tag.Album)
                         .Distinct()
                         .ToArray();
                 case TagName.AlbumArtists:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.AlbumArtists))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.AlbumArtists.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.AlbumArtists))
                         .Distinct()
                         .ToArray();
                 case TagName.AmazonID:
-                    return files.Select(f => f.Tag.AmazonId == null ? "" : f.Tag.AmazonId)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.AmazonId != null)
+                        .Select(f => f.Tag.AmazonId)
                         .Distinct()
                         .ToArray();
                 case TagName.Artists:
                     break;
                 case TagName.BeatsPerMinute:
-                    return files.Select(f => f.Tag.BeatsPerMinute.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.BeatsPerMinute != 0)
+                        .Select(f => f.Tag.BeatsPerMinute.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.Comment:
-                    return files.Select(f => f.Tag.Comment == null ? "" : f.Tag.Comment)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Comment != null)
+                        .Select(f => f.Tag.Comment)
                         .Distinct()
                         .ToArray();
                 case TagName.Composers:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.Composers))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.Composers.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.Composers))
                         .Distinct()
                         .ToArray();
                 case TagName.ComposersSort:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.ComposersSort))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.ComposersSort.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.ComposersSort))
                         .Distinct()
                         .ToArray();
                 case TagName.Conductor:
-                    return files.Select(f => f.Tag.Conductor == null ? "" : f.Tag.Conductor)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Conductor != null)
+                        .Select(f => f.Tag.Conductor)
                         .Distinct()
                         .ToArray();
                 case TagName.Copyright:
-                    return files.Select(f => f.Tag.Copyright == null ? "" : f.Tag.Copyright)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Copyright != null)
+                        .Select(f => f.Tag.Copyright)
                         .Distinct()
                         .ToArray();
                 case TagName.Description:
-                    return files.Select(f => f.Tag.Description == null ? "" : f.Tag.Description)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Description != null)
+                        .Select(f => f.Tag.Description)
                         .Distinct()
                         .ToArray();
                 case TagName.Disc:
-                    return files.Select(f => f.Tag.Disc.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.Disc != 0)
+                        .Select(f => f.Tag.Disc.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.DiscCount:
-                    return files.Select(f => f.Tag.DiscCount.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.DiscCount != 0)
+                        .Select(f => f.Tag.DiscCount.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.Genre:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.Genres))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.Genres.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.Genres))
                         .Distinct()
                         .ToArray();
                 case TagName.Grouping:
-                    return files.Select(f => f.Tag.Grouping == null ? "" : f.Tag.Grouping)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Grouping != null)
+                        .Select(f => f.Tag.Grouping)
                         .Distinct()
                         .ToArray();
                 case TagName.InitialKey:
-                    return files.Select(f => f.Tag.InitialKey == null ? "" : f.Tag.InitialKey)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.InitialKey != null)
+                        .Select(f => f.Tag.InitialKey)
                         .Distinct()
                         .ToArray();
                 case TagName.ISRC:
-                    return files.Select(f => f.Tag.ISRC == null ? "" : f.Tag.ISRC)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.ISRC != null)
+                        .Select(f => f.Tag.ISRC)
                         .Distinct()
                         .ToArray();
                 case TagName.Lyrics:
-                    return files.Select(f => f.Tag.Lyrics == null ? "" : f.Tag.Lyrics)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Lyrics != null)
+                        .Select(f => f.Tag.Lyrics)
                         .Distinct()
                         .ToArray();
                 case TagName.Performers:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.Performers))
-                        .Where(a => a.Array.Length != 0)
+                    return files.Where(a => a.Tag.Performers.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.Performers))
                         .Distinct()
                         .ToArray();
                 case TagName.PerformersSort:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.PerformersSort))
-                        .Where(a => a.Array.Length != 0)
+                    return files.Where(a => a.Tag.PerformersSort.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.PerformersSort))
                         .Distinct()
                         .ToArray();
                 case TagName.PerformersRole:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.PerformersRole))
-                        .Where(a => a.Array.Length != 0)
+                    return files.Where(a => a.Tag.PerformersRole.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.PerformersRole))
                         .Distinct()
                         .ToArray();
                 //case TagName.Pictures:
@@ -388,43 +389,43 @@ namespace Metadata_Setter
                 //        .Distinct()
                 //        .ToArray();
                 case TagName.Publisher:
-                    return files.Select(f => f.Tag.Publisher == null ? "" : f.Tag.Publisher)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Publisher != null)
+                        .Select(f => f.Tag.Publisher)
                         .Distinct()
                         .ToArray();
                 case TagName.RemixedBy:
-                    return files.Select(f => f.Tag.RemixedBy == null ? "" : f.Tag.RemixedBy)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.RemixedBy != null)
+                        .Select(f => f.Tag.RemixedBy)
                         .Distinct()
                         .ToArray();
                 case TagName.Subtitle:
-                    return files.Select(f => f.Tag.Subtitle == null ? "" : f.Tag.Subtitle)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Subtitle != null)
+                        .Select(f => f.Tag.Subtitle)
                         .Distinct()
                         .ToArray();
                 case TagName.Title:
-                    return files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Title != null)
+                        .Select(f => f.Tag.Title)
                         .Distinct()
                         .ToArray();
                 case TagName.TitleSort:
-                    return files.Select(f => f.Tag.TitleSort == null ? "" : f.Tag.TitleSort)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.TitleSort != null)
+                        .Select(f => f.Tag.TitleSort)
                         .Distinct()
                         .ToArray();
                 case TagName.Track:
-                    return files.Select(f => f.Tag.Track.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.Track != 0)
+                        .Select(f => f.Tag.Track.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.TrackCount:
-                    return files.Select(f => f.Tag.TrackCount.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.TrackCount != 0)
+                        .Select(f => f.Tag.TrackCount.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.Year:
-                    return files.Select(f => f.Tag.Year.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.Year != 0)
+                        .Select(f => f.Tag.Year.ToString())
                         .Distinct()
                         .ToArray();
                 default:
