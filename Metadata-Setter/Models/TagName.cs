@@ -44,8 +44,6 @@ namespace Metadata_Setter.Models
         InitialKey,
         [Description("ISRC")]
         ISRC,
-        [Description("Lenght")]
-        Lenght,
         [Description("Lyrics")]
         Lyrics,
         [Description("Performers")]
@@ -54,8 +52,8 @@ namespace Metadata_Setter.Models
         PerformersSort,
         [Description("Performers Role")]
         PerformersRole,
-        [Description("Pictures")]
-        Pictures,
+        //[Description("Pictures")]
+        //Pictures,
         [Description("Publisher")]
         Publisher,
         [Description("Remixed By")]

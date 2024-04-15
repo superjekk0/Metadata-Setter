@@ -5,6 +5,7 @@
 using Metadata_Setter.Models;
 using System.ComponentModel;
 using System.Reflection;
+using TagLib;
 
 namespace Metadata_Setter
 {
@@ -327,51 +328,100 @@ namespace Metadata_Setter
                         .Distinct()
                         .ToArray();
                 case TagName.Description:
-                    break;
+                    return files.Select(f => f.Tag.Description == null ? "" : f.Tag.Description)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Disc:
-                    break;
+                    return files.Select(f => f.Tag.Disc.ToString())
+                        .Where(f => f != "0")
+                        .Distinct()
+                        .ToArray();
                 case TagName.DiscCount:
-                    break;
+                    return files.Select(f => f.Tag.DiscCount.ToString())
+                        .Where(f => f != "0")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Genre:
                     return files.Select(f => new AttributeArray<string>(f.Tag.Genres))
                         .Where(f => f.Array.Length != 0)
                         .Distinct()
                         .ToArray();
                 case TagName.Grouping:
-                    break;
+                    return files.Select(f => f.Tag.Grouping == null ? "" : f.Tag.Grouping)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.InitialKey:
-                    break;
+                    return files.Select(f => f.Tag.InitialKey == null ? "" : f.Tag.InitialKey)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.ISRC:
-                    break;
-                case TagName.Lenght:
-                    break;
+                    return files.Select(f => f.Tag.ISRC == null ? "" : f.Tag.ISRC)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Lyrics:
-                    break;
+                    return files.Select(f => f.Tag.Lyrics == null ? "" : f.Tag.Lyrics)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Performers:
-                    break;
+                    return files.Select(f => new AttributeArray<string>(f.Tag.Performers))
+                        .Where(a => a.Array.Length != 0)
+                        .Distinct()
+                        .ToArray();
                 case TagName.PerformersSort:
-                    break;
+                    return files.Select(f => new AttributeArray<string>(f.Tag.PerformersSort))
+                        .Where(a => a.Array.Length != 0)
+                        .Distinct()
+                        .ToArray();
                 case TagName.PerformersRole:
-                    break;
-                case TagName.Pictures:
-                    break;
+                    return files.Select(f => new AttributeArray<string>(f.Tag.PerformersRole))
+                        .Where(a => a.Array.Length != 0)
+                        .Distinct()
+                        .ToArray();
+                //case TagName.Pictures:
+                //    return files.Select(f => new AttributeArray<IPicture>(f.Tag.Pictures))
+                //        .Where(f => f.Array.Length != 0)
+                //        .Distinct()
+                //        .ToArray();
                 case TagName.Publisher:
-                    break;
+                    return files.Select(f => f.Tag.Publisher == null ? "" : f.Tag.Publisher)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.RemixedBy:
-                    break;
+                    return files.Select(f => f.Tag.RemixedBy == null ? "" : f.Tag.RemixedBy)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Subtitle:
-                    break;
+                    return files.Select(f => f.Tag.Subtitle == null ? "" : f.Tag.Subtitle)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Title:
                     return files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
                         .Where(f => f != "")
                         .Distinct()
                         .ToArray();
                 case TagName.TitleSort:
-                    break;
+                    return files.Select(f => f.Tag.TitleSort == null ? "" : f.Tag.TitleSort)
+                        .Where(f => f != "")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Track:
-                    break;
+                    return files.Select(f => f.Tag.Track.ToString())
+                        .Where(f => f != "0")
+                        .Distinct()
+                        .ToArray();
                 case TagName.TrackCount:
-                    break;
+                    return files.Select(f => f.Tag.TrackCount.ToString())
+                        .Where(f => f != "0")
+                        .Distinct()
+                        .ToArray();
                 case TagName.Year:
                     return files.Select(f => f.Tag.Year.ToString())
                         .Where(f => f != "0")
@@ -417,46 +467,61 @@ namespace Metadata_Setter
                     file.Tag.Copyright = TxtApplyValue.Text;
                     break;
                 case TagName.Description:
+                    file.Tag.Description = TxtApplyValue.Text;
                     break;
                 case TagName.Disc:
+                    file.Tag.Disc = (uint)NumNumberValues.Value;
                     break;
                 case TagName.DiscCount:
+                    file.Tag.DiscCount = (uint)NumNumberValues.Value;
                     break;
                 case TagName.Genre:
                     file.Tag.Genres = TxtApplyValue.Text.Split(';');
                     break;
                 case TagName.Grouping:
+                    file.Tag.Grouping = TxtApplyValue.Text;
                     break;
                 case TagName.InitialKey:
+                    file.Tag.InitialKey = TxtApplyValue.Text;
                     break;
                 case TagName.ISRC:
-                    break;
-                case TagName.Lenght:
+                    file.Tag.ISRC = TxtApplyValue.Text;
                     break;
                 case TagName.Lyrics:
+                    file.Tag.Lyrics = TxtApplyValue.Text;
                     break;
                 case TagName.Performers:
+                    file.Tag.Performers = TxtApplyValue.Text.Split(';');
                     break;
                 case TagName.PerformersSort:
+                    file.Tag.PerformersSort = TxtApplyValue.Text.Split(';');
                     break;
                 case TagName.PerformersRole:
+                    file.Tag.PerformersRole = TxtApplyValue.Text.Split(';');
                     break;
-                case TagName.Pictures:
-                    break;
+                //case TagName.Pictures:
+                //    // TODO : Set a specific case for pictures
+                //    break;
                 case TagName.Publisher:
+                    file.Tag.Publisher = TxtApplyValue.Text;
                     break;
                 case TagName.RemixedBy:
+                    file.Tag.RemixedBy = TxtApplyValue.Text;
                     break;
                 case TagName.Subtitle:
+                    file.Tag.Subtitle = TxtApplyValue.Text;
                     break;
                 case TagName.Title:
                     file.Tag.Title = TxtApplyValue.Text;
                     break;
                 case TagName.TitleSort:
+                    file.Tag.TitleSort = TxtApplyValue.Text;
                     break;
                 case TagName.Track:
+                    file.Tag.Track = (uint)NumNumberValues.Value;
                     break;
                 case TagName.TrackCount:
+                    file.Tag.TrackCount = (uint)NumNumberValues.Value;
                     break;
                 case TagName.Year:
                     file.Tag.Year = (uint)NumNumberValues.Value;
@@ -482,52 +547,37 @@ namespace Metadata_Setter
                 case TagName.ComposersSort:
                 case TagName.Conductor:
                 case TagName.Copyright:
-                    return true;
                 case TagName.Description:
-                case TagName.Disc:
-                    break;
-                case TagName.DiscCount:
-                    break;
-                case TagName.Genre:
                     return true;
+                case TagName.Disc:
+                case TagName.DiscCount:
+                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= NumNumberValues.Maximum;
+                case TagName.Genre:
                 case TagName.Grouping:
-                    break;
                 case TagName.InitialKey:
-                    break;
                 case TagName.ISRC:
-                    break;
-                case TagName.Lenght:
-                    break;
                 case TagName.Lyrics:
-                    break;
                 case TagName.Performers:
-                    break;
                 case TagName.PerformersSort:
-                    break;
                 case TagName.PerformersRole:
-                    break;
-                case TagName.Pictures:
-                    break;
+                    return true;
+                //case TagName.Pictures:
+                //    // TODO : Set a specific case for pictures
+                //    return false;
                 case TagName.Publisher:
-                    break;
                 case TagName.RemixedBy:
-                    break;
                 case TagName.Subtitle:
-                    break;
                 case TagName.Title:
-                    break;
                 case TagName.TitleSort:
-                    break;
+                    return true;
                 case TagName.Track:
-                    break;
                 case TagName.TrackCount:
-                    break;
+                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= NumNumberValues.Maximum;
                 case TagName.Year:
                     return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 9999;
                 default:
                     return false;
             }
-            return false;
         }
 
         private void DisplayMetadataContext()
@@ -583,10 +633,18 @@ namespace Metadata_Setter
                     TxtApplyValue.Visible = true;
                     break;
                 case TagName.Description:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "This is a sample description";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.Disc:
-                    break;
                 case TagName.DiscCount:
+                    // The maximum will most likely never be attained
+                    NumNumberValues.Visible = true;
+                    NumNumberValues.Minimum = 0;
+                    NumNumberValues.Maximum = 1000;
+                    NumNumberValues.Value = 1;
+                    TxtApplyValue.Visible = false;
                     break;
                 case TagName.Genre:
                     NumNumberValues.Visible = false;
@@ -594,28 +652,52 @@ namespace Metadata_Setter
                     TxtApplyValue.Visible = true;
                     break;
                 case TagName.Grouping:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Group description";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.InitialKey:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "C#m";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.ISRC:
-                    break;
-                case TagName.Lenght:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "AB-CD1-23-45678";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.Lyrics:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "This is a sample Lyrics";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.Performers:
-                    break;
                 case TagName.PerformersSort:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Performer1;Performer2";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.PerformersRole:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Piano;Bass";
+                    TxtApplyValue.Visible = true;
                     break;
-                case TagName.Pictures:
-                    break;
+                //case TagName.Pictures:
+                //    break;
                 case TagName.Publisher:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Publisher";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.RemixedBy:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Remixer";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.Subtitle:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "This is a Subtitle";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.Title:
                     NumNumberValues.Visible = false;
@@ -623,10 +705,17 @@ namespace Metadata_Setter
                     TxtApplyValue.Visible = true;
                     break;
                 case TagName.TitleSort:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "Title";
+                    TxtApplyValue.Visible = true;
                     break;
                 case TagName.Track:
-                    break;
                 case TagName.TrackCount:
+                    NumNumberValues.Visible = true;
+                    NumNumberValues.Minimum = 0;
+                    NumNumberValues.Maximum = 1000;
+                    NumNumberValues.Value = 1;
+                    TxtApplyValue.Visible = false;
                     break;
                 case TagName.Year:
                     NumNumberValues.Visible = true;
