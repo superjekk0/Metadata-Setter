@@ -14,6 +14,8 @@ namespace Metadata_Setter
     {
         private string repository = "";
         private List<FileDisplay> files = new List<FileDisplay>();
+        private TagName tagName;
+
         public FrmFileManipulator()
         {
             // TODO : Localize the Winform
@@ -273,26 +275,27 @@ namespace Metadata_Setter
             }
 
             //LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
-            lsvMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text)
+            ExtractTagName();
+            lsvMetadataValues.Items.AddRange(FileTags(aimedFiles)
                 .Select(f => new ListViewItem(f.ToString())).ToArray());
             BtnMetadataChange.Enabled = aimedFiles.Count != 0;
         }
 
-        private TagName ExtractTagName(string tag)
+        private void ExtractTagName()
         {
             try
             {
-                return Enum.Parse<TagName>((CboMetadataList.SelectedItem as TagDisplay).Value);
+                tagName = Enum.Parse<TagName>((CboMetadataList.SelectedItem as TagDisplay).Value);
             }
             catch (Exception)
             {
-                return (TagName) (-1);
+                tagName = (TagName) (-1);
             }
         }
 
-        private object[] FileTags(List<TagLib.File> files, string tag)
+        private object[] FileTags(List<TagLib.File> files)
         {
-            switch (ExtractTagName(tag))
+            switch (tagName)
             {
                 case TagName.Album:
                     return files.Where(f => f.Tag.Album != null)
@@ -449,7 +452,7 @@ namespace Metadata_Setter
 
         private void EditFile(TagLib.File file)
         {
-            switch (ExtractTagName(CboMetadataList.Text))
+            switch (tagName)
             {
                 case TagName.Album:
                     file.Tag.Album = TxtApplyValue.Text;
@@ -547,7 +550,7 @@ namespace Metadata_Setter
 
         private bool ValidInput()
         {
-            switch (ExtractTagName(CboMetadataList.Text))
+            switch (tagName)
             {
                 case TagName.Album:
                 case TagName.AlbumArtists:
@@ -596,8 +599,7 @@ namespace Metadata_Setter
 
         private void DisplayMetadataContext()
         {
-            TagName tag = ExtractTagName(CboMetadataList.Text);
-            switch (tag)
+            switch (tagName)
             {
                 case TagName.Album:
                     NumNumberValues.Visible = false;
@@ -742,12 +744,12 @@ namespace Metadata_Setter
                 default:
                     break;
             }
-            DisplayListViewDatas(tag);
+            DisplayListViewDatas();
         }
 
-        private void DisplayListViewDatas(TagName tag)
+        private void DisplayListViewDatas()
         {
-            switch (tag)
+            switch (tagName)
             {
                 case TagName.Album:
                 case TagName.AlbumArtists:
@@ -792,6 +794,8 @@ namespace Metadata_Setter
                 case TagName.TrackCount:
                     break;
             }
+
+            //lsvMetadataValues.Items.Clear();
         }
     }
 }
