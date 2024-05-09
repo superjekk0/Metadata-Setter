@@ -5,6 +5,7 @@
 using Metadata_Setter.Models;
 using System.ComponentModel;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using TagLib;
 
 namespace Metadata_Setter
@@ -206,6 +207,18 @@ namespace Metadata_Setter
             {
                 // It should not be necessary to make a copy of files, as if the directory
                 // does not exist, the program will already have thrown an exception.
+                if (Regex.IsMatch(path, "%.*%"))
+                {
+                    int firstPercent = path.IndexOf('%');
+                    int secondPercent = path.IndexOf('%', firstPercent + 1);
+                    string variable = path.Substring(firstPercent, secondPercent - firstPercent + 1);
+                    if (Environment.GetEnvironmentVariable(variable.Replace("%", "")) == null)
+                    {
+                        throw new Exception($"The environment variable '{variable}' does not exist");
+                    }
+                    path = path.Replace(variable, Environment.GetEnvironmentVariable(variable.Replace("%", "")));
+
+                }
                 LsvFiles.Items.Clear();
                 LsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d.Substring(d.LastIndexOf('\\') + 1), 0)).ToArray());
                 LsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f.Substring(f.LastIndexOf('\\') + 1), 1)).ToArray());
@@ -583,7 +596,8 @@ namespace Metadata_Setter
 
         private void DisplayMetadataContext()
         {
-            switch (ExtractTagName(CboMetadataList.Text))
+            TagName tag = ExtractTagName(CboMetadataList.Text);
+            switch (tag)
             {
                 case TagName.Album:
                     NumNumberValues.Visible = false;
@@ -726,6 +740,56 @@ namespace Metadata_Setter
                     TxtApplyValue.Visible = false;
                     break;
                 default:
+                    break;
+            }
+            DisplayListViewDatas(tag);
+        }
+
+        private void DisplayListViewDatas(TagName tag)
+        {
+            switch (tag)
+            {
+                case TagName.Album:
+                case TagName.AlbumArtists:
+                case TagName.AmazonID:
+                case TagName.Artists:
+                case TagName.BeatsPerMinute:
+                case TagName.Comment:
+                case TagName.Composers:
+                case TagName.ComposersSort:
+                case TagName.Conductor:
+                case TagName.Copyright:
+                case TagName.Description:
+                case TagName.Disc:
+                case TagName.DiscCount:
+                case TagName.Genre:
+                case TagName.Grouping:
+                case TagName.InitialKey:
+                case TagName.ISRC:
+                case TagName.Lyrics:
+                case TagName.Performers:
+                case TagName.PerformersSort:
+                case TagName.PerformersRole:
+                case TagName.Publisher:
+                case TagName.RemixedBy:
+                case TagName.Subtitle:
+                case TagName.Title:
+                case TagName.TitleSort:
+                case TagName.Year:
+                    lsvMetadataValues.Columns.Clear();
+                    lsvMetadataValues.Columns.Add("Data", "Data", lsvMetadataValues.Width);
+                    lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
+                    lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
+                    break;
+                default:
+                    break;
+                case TagName.Track:
+                    lsvMetadataValues.Columns.Clear();
+                    lsvMetadataValues.Columns.Add("Num", "No", 50);
+                    lsvMetadataValues.Columns.Add("Reference", "Reference value", lsvMetadataValues.Width - 50);
+                    lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+                    break;
+                case TagName.TrackCount:
                     break;
             }
         }
