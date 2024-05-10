@@ -116,7 +116,6 @@ namespace Metadata_Setter
         private void CboMetadataList_IndexChanged(object sender, EventArgs e)
         {
             UpdateTagList(LsvFiles.SelectedIndices);
-            DisplayMetadataContext();
         }
 
         private void LsvFiles_SelectedIndexChanged(object sender, EventArgs e)
@@ -187,6 +186,11 @@ namespace Metadata_Setter
         {
             if (ActiveControl == CboMetadataList)
             {
+                if (keyData == Keys.Enter)
+                {
+                    //TxtApplyValue.Focus();
+                    UpdateTagList(LsvFiles.SelectedIndices);
+                }
                 CboMetadataList.DroppedDown = false;
             }
             else if (ActiveControl == CboPath && keyData == Keys.Enter)
@@ -209,7 +213,7 @@ namespace Metadata_Setter
             {
                 // It should not be necessary to make a copy of files, as if the directory
                 // does not exist, the program will already have thrown an exception.
-                if (Regex.IsMatch(path, "%.*%"))
+                if (EnvironmentVariable().IsMatch(path))
                 {
                     int firstPercent = path.IndexOf('%');
                     int secondPercent = path.IndexOf('%', firstPercent + 1);
@@ -252,12 +256,16 @@ namespace Metadata_Setter
 
         private void UpdateTagList(ListView.SelectedIndexCollection selectedIndices)
         {
+            ExtractTagName();
             if (CboMetadataList.SelectedIndex == -1)
             {
                 BtnMetadataChange.Enabled = false;
+                DisplayMetadataContext();
+                lsvMetadataValues.Items.Clear();
                 return;
             }
 
+            DisplayMetadataContext();
             //LstMetadataValues.Items.Clear();
             lsvMetadataValues.Items.Clear();
 
@@ -275,7 +283,6 @@ namespace Metadata_Setter
             }
 
             //LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
-            ExtractTagName();
             lsvMetadataValues.Items.AddRange(FileTags(aimedFiles)
                 .Select(f => new ListViewItem(f.ToString())).ToArray());
             BtnMetadataChange.Enabled = aimedFiles.Count != 0;
@@ -285,6 +292,11 @@ namespace Metadata_Setter
         {
             try
             {
+                if (CboMetadataList.SelectedItem == null)
+                {
+                    tagName = (TagName) (-1);
+                    return;
+                }
                 tagName = Enum.Parse<TagName>((CboMetadataList.SelectedItem as TagDisplay).Value);
             }
             catch (Exception)
@@ -742,6 +754,9 @@ namespace Metadata_Setter
                     TxtApplyValue.Visible = false;
                     break;
                 default:
+                    NumNumberValues.Visible = false;
+                    TxtApplyValue.PlaceholderText = "";
+                    TxtApplyValue.Visible = true;
                     break;
             }
             DisplayListViewDatas();
@@ -778,12 +793,11 @@ namespace Metadata_Setter
                 case TagName.Title:
                 case TagName.TitleSort:
                 case TagName.Year:
+                default:
                     lsvMetadataValues.Columns.Clear();
                     lsvMetadataValues.Columns.Add("Data", "Data", lsvMetadataValues.Width);
-                    lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
+                    //lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
-                    break;
-                default:
                     break;
                 case TagName.Track:
                     lsvMetadataValues.Columns.Clear();
@@ -797,5 +811,8 @@ namespace Metadata_Setter
 
             //lsvMetadataValues.Items.Clear();
         }
+
+        [GeneratedRegex("%.*%")]
+        private static partial Regex EnvironmentVariable();
     }
 }
