@@ -226,8 +226,8 @@ namespace Metadata_Setter
 
                 }
                 lsvFiles.Items.Clear();
-                lsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d.Substring(d.LastIndexOf('\\') + 1), 0)).ToArray());
-                lsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f.Substring(f.LastIndexOf('\\') + 1), 1)).ToArray());
+                lsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(GetFileName(d), 0)).ToArray());
+                lsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(GetFileName(f), 1)).ToArray());
                 files = lsvFiles.Items.OfType<ListViewItem>()
                     .Where(i => i.ImageIndex != 0 && TagLib.SupportedMimeType
                     .AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
@@ -280,9 +280,25 @@ namespace Metadata_Setter
             }
 
             //LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
-            lsvMetadataValues.Items.AddRange(FileTags(aimedFiles)
-                .Select(f => new ListViewItem(f.ToString())).ToArray());
+            object[] hitFiles = FileTags(aimedFiles);
+            List<ListViewItem> items = new List<ListViewItem>();
+            for (int i = 0; i < hitFiles.Length; i++)
+            {
+                items.Add(MetaData(hitFiles[i], i));
+            }
+            lsvMetadataValues.Items.AddRange(items.ToArray());
             btnMetadataChange.Enabled = aimedFiles.Count != 0;
+        }
+
+        private static ListViewItem MetaData(object file, int itterator)
+        {
+            if (file is TrackDisplay)
+            {
+                ListViewItem item = new ListViewItem((itterator + 1).ToString());
+                item.SubItems.Add(file.ToString());
+                return item;
+            }
+            return new ListViewItem(file.ToString());
         }
 
         private void ExtractTagName()
@@ -439,9 +455,9 @@ namespace Metadata_Setter
                         .Distinct()
                         .ToArray();
                 case TagName.Track:
-                    return files.Where(f => f.Tag.Track != 0)
-                        .Select(f => f.Tag.Track.ToString())
-                        .Distinct()
+                    return files
+                        .Select(f => new TrackDisplay(f))
+                        .OrderBy(f => f)
                         .ToArray();
                 case TagName.TrackCount:
                     return files.Where(f => f.Tag.TrackCount != 0)
@@ -808,6 +824,15 @@ namespace Metadata_Setter
                 case TagName.TrackCount:
                     break;
             }
+        }
+
+        /// <summary>
+        /// Gets the file or directory name from a full path
+        /// </summary>
+        /// <param name="path">The full path of the file or directory</param>
+        public string GetFileName(string path)
+        {
+            return path.Substring(path.LastIndexOf('\\') + 1);
         }
 
         [GeneratedRegex("%.*%")]
