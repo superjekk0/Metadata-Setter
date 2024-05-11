@@ -40,7 +40,8 @@ namespace Metadata_Setter
                 .Select(t => new TagDisplay
                 {
                     Description = (Attribute.GetCustomAttribute(t.GetType().GetField(t.ToString()), typeof(DescriptionAttribute)) as DescriptionAttribute)?.Description ?? t.ToString()
-                        , Value = t.ToString()
+                        ,
+                    Value = t.ToString()
                 }
                 )
                 .ToArray();
@@ -179,9 +180,88 @@ namespace Metadata_Setter
             this.ActiveControl = null;
         }
 
+        private void BtnUp_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index > 0)
+            {
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index - 1);
+            }
+        }
+
+        private void BtnDown_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index < lsvMetadataValues.Items.Count - 1)
+            {
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index + 1);
+            }
+        }
+
+        private void BtnHigher_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index > 0)
+            {
+                btnMetadataChange.Enabled = true;
+                string temp = item.SubItems[1].Text;
+                item.SubItems[1].Text = lsvMetadataValues.Items[item.Index - 1].SubItems[1].Text;
+                lsvMetadataValues.Items[item.Index - 1].SubItems[1].Text = temp;
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index - 1);
+            }
+        }
+
+        private void BtnLower_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index < lsvMetadataValues.Items.Count - 1)
+            {
+                btnMetadataChange.Enabled = true;
+                string temp = item.SubItems[1].Text;
+                item.SubItems[1].Text = lsvMetadataValues.Items[item.Index + 1].SubItems[1].Text;
+                lsvMetadataValues.Items[item.Index + 1].SubItems[1].Text = temp;
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index + 1);
+            }
+        }
         //
         // Various utility functions
         //
+        private void AutoScrollListView(int index)
+        {
+            lsvMetadataValues.Items[index].Selected = true;
+            lsvMetadataValues.Items[index].Focused = true;
+            lsvMetadataValues.Items[index].EnsureVisible();
+            lsvMetadataValues.Focus();
+        }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (ActiveControl == cboMetadataList)
@@ -307,14 +387,14 @@ namespace Metadata_Setter
             {
                 if (cboMetadataList.SelectedItem == null)
                 {
-                    tagName = (TagName) (-1);
+                    tagName = (TagName)(-1);
                     return;
                 }
                 tagName = Enum.Parse<TagName>((cboMetadataList.SelectedItem as TagDisplay).Value);
             }
             catch (Exception)
             {
-                tagName = (TagName) (-1);
+                tagName = (TagName)(-1);
             }
         }
 
@@ -459,11 +539,11 @@ namespace Metadata_Setter
                         .Select(f => new TrackDisplay(f))
                         .OrderBy(f => f)
                         .ToArray();
-                case TagName.TrackCount:
-                    return files.Where(f => f.Tag.TrackCount != 0)
-                        .Select(f => f.Tag.TrackCount.ToString())
-                        .Distinct()
-                        .ToArray();
+                //case TagName.TrackCount:
+                //    return files.Where(f => f.Tag.TrackCount != 0)
+                //        .Select(f => f.Tag.TrackCount.ToString())
+                //        .Distinct()
+                //        .ToArray();
                 case TagName.Year:
                     return files.Where(f => f.Tag.Year != 0)
                         .Select(f => f.Tag.Year.ToString())
@@ -561,10 +641,10 @@ namespace Metadata_Setter
                     file.Tag.TitleSort = txtApplyValue.Text;
                     break;
                 case TagName.Track:
-                    file.Tag.Track = (uint)numValues.Value;
-                    break;
-                case TagName.TrackCount:
-                    file.Tag.TrackCount = (uint)numValues.Value;
+                    TrackDisplay display = new TrackDisplay(file);
+                    file.Tag.Track = uint.Parse(lsvMetadataValues.Items.OfType<ListViewItem>()
+                        .First(i => i.SubItems[1].Text == display.ToString()).Text);
+                    file.Tag.TrackCount = (uint)lsvMetadataValues.Items.Count;
                     break;
                 case TagName.Year:
                     file.Tag.Year = (uint)numValues.Value;
@@ -615,8 +695,8 @@ namespace Metadata_Setter
                     return true;
                 case TagName.Track:
                     return true;
-                case TagName.TrackCount:
-                    return numValues.Value >= 0 && numValues.Value <= numValues.Maximum;
+                //case TagName.TrackCount:
+                //    return numValues.Value >= 0 && numValues.Value <= numValues.Maximum;
                 case TagName.Year:
                     return numValues.Value >= 0 && numValues.Value <= 9999;
                 default:
@@ -753,14 +833,14 @@ namespace Metadata_Setter
                     txtApplyValue.PlaceholderText = "Title";
                     txtApplyValue.Visible = true;
                     break;
-                case TagName.Track:
-                case TagName.TrackCount:
-                    numValues.Visible = true;
-                    numValues.Minimum = 0;
-                    numValues.Maximum = 1000;
-                    numValues.Value = 1;
-                    txtApplyValue.Visible = false;
-                    break;
+                //case TagName.Track:
+                //case TagName.TrackCount:
+                //    numValues.Visible = true;
+                //    numValues.Minimum = 0;
+                //    numValues.Maximum = 1000;
+                //    numValues.Value = 1;
+                //    txtApplyValue.Visible = false;
+                //    break;
                 case TagName.Year:
                     numValues.Visible = true;
                     numValues.Minimum = 0;
@@ -814,15 +894,17 @@ namespace Metadata_Setter
                     //lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
                     lblSelectMetadata.Text = "Select metadata to apply";
+                    grpTrackOrder.Visible = false;
                     break;
                 case TagName.Track:
                     lsvMetadataValues.Columns.Clear();
                     lsvMetadataValues.Columns.Add("Num", "No", 50);
                     lsvMetadataValues.Columns.Add("Reference", "Title or File Name", lsvMetadataValues.Width - 50);
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+                    grpTrackOrder.Visible = true;
                     break;
-                case TagName.TrackCount:
-                    break;
+                //case TagName.TrackCount:
+                //    break;
             }
         }
 

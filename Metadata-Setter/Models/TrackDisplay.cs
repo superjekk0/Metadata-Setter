@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Metadata_Setter
+namespace Metadata_Setter.Models
 {
     public class TrackDisplay : IComparable<TrackDisplay>
     {

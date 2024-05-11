@@ -46,8 +46,14 @@
             BtnUpperFolder = new Button();
             numValues = new NumericUpDown();
             lsvMetadataValues = new ListView();
+            grpTrackOrder = new GroupBox();
+            btnLower = new Button();
+            btnHigher = new Button();
+            btnDown = new Button();
+            btnUp = new Button();
             MnuOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)numValues).BeginInit();
+            grpTrackOrder.SuspendLayout();
             SuspendLayout();
             // 
             // MnuOptions
@@ -83,33 +89,33 @@
             BtnFolderSearch.UseVisualStyleBackColor = true;
             BtnFolderSearch.Click += BtnFolderSearch_Click;
             // 
-            // CboPath
+            // cboPath
             // 
             cboPath.AutoCompleteMode = AutoCompleteMode.Suggest;
             cboPath.AutoCompleteSource = AutoCompleteSource.FileSystem;
             cboPath.FormattingEnabled = true;
             cboPath.IntegralHeight = false;
             cboPath.Location = new Point(426, 42);
-            cboPath.Name = "CboPath";
+            cboPath.Name = "cboPath";
             cboPath.Size = new Size(325, 23);
             cboPath.TabIndex = 4;
             cboPath.DropDown += CboPath_DropDown;
             // 
-            // BtnMetadataChange
+            // btnMetadataChange
             // 
             btnMetadataChange.Font = new Font("Segoe UI", 14F);
             btnMetadataChange.Location = new Point(392, 384);
-            btnMetadataChange.Name = "BtnMetadataChange";
+            btnMetadataChange.Name = "btnMetadataChange";
             btnMetadataChange.Size = new Size(396, 40);
             btnMetadataChange.TabIndex = 5;
             btnMetadataChange.Text = "Apply Metadata Change";
             btnMetadataChange.UseVisualStyleBackColor = true;
             btnMetadataChange.Click += BtnMetadataChange_Click;
             // 
-            // PrgModificationApply
+            // prgModificationApply
             // 
             prgModificationApply.Location = new Point(12, 446);
-            prgModificationApply.Name = "PrgModificationApply";
+            prgModificationApply.Name = "prgModificationApply";
             prgModificationApply.Size = new Size(776, 24);
             prgModificationApply.TabIndex = 6;
             // 
@@ -122,22 +128,22 @@
             lblSelectMetadata.TabIndex = 7;
             lblSelectMetadata.Text = "Select a Metadata to Modify:";
             // 
-            // CboMetadataList
+            // cboMetadataList
             // 
             cboMetadataList.AutoCompleteMode = AutoCompleteMode.Suggest;
             cboMetadataList.AutoCompleteSource = AutoCompleteSource.ListItems;
             cboMetadataList.FormattingEnabled = true;
             cboMetadataList.IntegralHeight = false;
             cboMetadataList.Location = new Point(17, 82);
-            cboMetadataList.Name = "CboMetadataList";
+            cboMetadataList.Name = "cboMetadataList";
             cboMetadataList.Size = new Size(309, 23);
             cboMetadataList.TabIndex = 8;
             cboMetadataList.SelectedIndexChanged += CboMetadataList_IndexChanged;
             // 
-            // TxtApplyValue
+            // txtApplyValue
             // 
             txtApplyValue.Location = new Point(39, 151);
-            txtApplyValue.Name = "TxtApplyValue";
+            txtApplyValue.Name = "txtApplyValue";
             txtApplyValue.Size = new Size(265, 23);
             txtApplyValue.TabIndex = 10;
             // 
@@ -150,10 +156,10 @@
             LblNewValue.TabIndex = 11;
             LblNewValue.Text = "New Value to Apply:";
             // 
-            // LsvFiles
+            // lsvFiles
             // 
             lsvFiles.Location = new Point(392, 71);
-            lsvFiles.Name = "LsvFiles";
+            lsvFiles.Name = "lsvFiles";
             lsvFiles.Size = new Size(396, 289);
             lsvFiles.SmallImageList = ImgIcons;
             lsvFiles.TabIndex = 12;
@@ -181,28 +187,85 @@
             BtnUpperFolder.UseVisualStyleBackColor = true;
             BtnUpperFolder.Click += BtnUpperFolder_Click;
             // 
-            // NumNumberValues
+            // numValues
             // 
             numValues.Location = new Point(39, 151);
-            numValues.Name = "NumNumberValues";
+            numValues.Name = "numValues";
             numValues.Size = new Size(265, 23);
             numValues.TabIndex = 14;
             numValues.Visible = false;
             // 
             // lsvMetadataValues
             // 
+            lsvMetadataValues.FullRowSelect = true;
             lsvMetadataValues.Location = new Point(39, 193);
+            lsvMetadataValues.MultiSelect = false;
             lsvMetadataValues.Name = "lsvMetadataValues";
             lsvMetadataValues.Size = new Size(265, 231);
             lsvMetadataValues.TabIndex = 15;
             lsvMetadataValues.UseCompatibleStateImageBehavior = false;
             lsvMetadataValues.View = View.Details;
             // 
+            // grpTrackOrder
+            // 
+            grpTrackOrder.BackColor = Color.Transparent;
+            grpTrackOrder.Controls.Add(btnLower);
+            grpTrackOrder.Controls.Add(btnHigher);
+            grpTrackOrder.Controls.Add(btnDown);
+            grpTrackOrder.Controls.Add(btnUp);
+            grpTrackOrder.Location = new Point(39, 151);
+            grpTrackOrder.Name = "grpTrackOrder";
+            grpTrackOrder.Size = new Size(265, 23);
+            grpTrackOrder.TabIndex = 16;
+            grpTrackOrder.TabStop = false;
+            grpTrackOrder.Visible = false;
+            // 
+            // btnLower
+            // 
+            btnLower.Location = new Point(202, -1);
+            btnLower.Name = "btnLower";
+            btnLower.Size = new Size(57, 23);
+            btnLower.TabIndex = 3;
+            btnLower.Text = "Lower";
+            btnLower.UseVisualStyleBackColor = true;
+            btnLower.Click += BtnLower_Click;
+            // 
+            // btnHigher
+            // 
+            btnHigher.Location = new Point(140, 0);
+            btnHigher.Name = "btnHigher";
+            btnHigher.Size = new Size(56, 23);
+            btnHigher.TabIndex = 2;
+            btnHigher.Text = "Higher";
+            btnHigher.UseVisualStyleBackColor = true;
+            btnHigher.Click += BtnHigher_Click;
+            // 
+            // btnDown
+            // 
+            btnDown.Location = new Point(60, 0);
+            btnDown.Name = "btnDown";
+            btnDown.Size = new Size(47, 23);
+            btnDown.TabIndex = 1;
+            btnDown.Text = "Down";
+            btnDown.UseVisualStyleBackColor = true;
+            btnDown.Click += BtnDown_Click;
+            // 
+            // btnUp
+            // 
+            btnUp.Location = new Point(6, 0);
+            btnUp.Name = "btnUp";
+            btnUp.Size = new Size(48, 23);
+            btnUp.TabIndex = 0;
+            btnUp.Text = "Up";
+            btnUp.UseVisualStyleBackColor = true;
+            btnUp.Click += BtnUp_Click;
+            // 
             // FrmFileManipulator
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 482);
+            Controls.Add(grpTrackOrder);
             Controls.Add(lsvMetadataValues);
             Controls.Add(numValues);
             Controls.Add(BtnUpperFolder);
@@ -223,6 +286,7 @@
             MnuOptions.ResumeLayout(false);
             MnuOptions.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)numValues).EndInit();
+            grpTrackOrder.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -244,5 +308,10 @@
         private Button BtnUpperFolder;
         private NumericUpDown numValues;
         private ListView lsvMetadataValues;
+        private GroupBox grpTrackOrder;
+        private Button btnLower;
+        private Button btnHigher;
+        private Button btnDown;
+        private Button btnUp;
     }
 }
