@@ -197,6 +197,7 @@
             // 
             // lsvMetadataValues
             // 
+            lsvMetadataValues.Cursor = Cursors.Cross;
             lsvMetadataValues.FullRowSelect = true;
             lsvMetadataValues.Location = new Point(39, 193);
             lsvMetadataValues.MultiSelect = false;
@@ -205,6 +206,8 @@
             lsvMetadataValues.TabIndex = 15;
             lsvMetadataValues.UseCompatibleStateImageBehavior = false;
             lsvMetadataValues.View = View.Details;
+            lsvMetadataValues.ItemMouseHover += LsvMetadataValues_ItemMouseHover;
+            lsvMetadataValues.MouseMove += LsvMetadataValues_MouseMove;
             // 
             // grpTrackOrder
             // 

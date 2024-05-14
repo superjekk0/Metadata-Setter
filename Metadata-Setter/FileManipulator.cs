@@ -15,6 +15,9 @@ namespace Metadata_Setter
         private string repository = "";
         private List<FileDisplay> files = new List<FileDisplay>();
         private TagName tagName;
+        ListViewItem? targetedItem = null;
+        ListViewItem? hoveredItem = null;
+        private bool dragging = false;
 
         public FrmFileManipulator()
         {
@@ -249,6 +252,52 @@ namespace Metadata_Setter
                 item.Selected = false;
                 item.Focused = false;
                 AutoScrollListView(item.Index + 1);
+            }
+        }
+
+        private void LsvMetadataValues_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (tagName != TagName.Track)
+            {
+                return;
+            }
+            switch (e.Button)
+            {
+                case MouseButtons.None:
+                    dragging = false;
+                    Cursor = Cursors.Default;
+                    break;
+                case MouseButtons.Left:
+                    dragging = true;
+                    Cursor = Cursors.SizeAll;
+                    break;
+                case MouseButtons.Right:
+                    break;
+            }
+        }
+
+        private void LsvMetadataValues_ItemMouseHover(object sender, ListViewItemMouseHoverEventArgs e)
+        {
+            if (tagName != TagName.Track)
+            {
+                return;
+            }
+
+            if (!dragging)
+            {
+                targetedItem = e.Item;
+            }
+            else
+            {
+                if (hoveredItem != null)
+                {
+                    hoveredItem.Selected = false;
+                }
+                hoveredItem = e.Item;
+                if (hoveredItem != null)
+                {
+                    hoveredItem.Selected = true;
+                }
             }
         }
         //
@@ -894,6 +943,7 @@ namespace Metadata_Setter
                     //lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
                     lblSelectMetadata.Text = "Select metadata to apply";
+                    lsvMetadataValues.AllowDrop = false;
                     grpTrackOrder.Visible = false;
                     break;
                 case TagName.Track:
@@ -901,10 +951,11 @@ namespace Metadata_Setter
                     lsvMetadataValues.Columns.Add("Num", "No", 50);
                     lsvMetadataValues.Columns.Add("Reference", "Title or File Name", lsvMetadataValues.Width - 50);
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+                    lsvMetadataValues.AllowDrop = true;
                     grpTrackOrder.Visible = true;
                     break;
-                //case TagName.TrackCount:
-                //    break;
+                    //case TagName.TrackCount:
+                    //    break;
             }
         }
 
