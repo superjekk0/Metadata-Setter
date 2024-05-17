@@ -45,7 +45,7 @@ namespace Metadata_Setter
                 .Cast<TagName>()
                 .Select(t => new TagDisplay
                 {
-                    Description = (Attribute.GetCustomAttribute(t.GetType().GetField(t.ToString()), typeof(DescriptionAttribute)) as DescriptionAttribute)?.Description ?? t.ToString()
+                    Description = (Attribute.GetCustomAttribute(t.GetType().GetField(t.ToString())!, typeof(DescriptionAttribute)) as DescriptionAttribute)?.Description ?? t.ToString()
                         ,
                     Value = t.ToString()
                 }
@@ -230,7 +230,7 @@ namespace Metadata_Setter
             if (item != null && item.Index > 0)
             {
                 btnMetadataChange.Enabled = true;
-                SwapText(item, lsvMetadataValues.Items[item.Index - 1]);
+                Reorder(item, lsvMetadataValues.Items[item.Index - 1]);
                 item.Selected = false;
                 item.Focused = false;
                 AutoScrollListView(item.Index - 1);
@@ -248,7 +248,7 @@ namespace Metadata_Setter
             if (item != null && item.Index < lsvMetadataValues.Items.Count - 1)
             {
                 btnMetadataChange.Enabled = true;
-                SwapText(item, lsvMetadataValues.Items[item.Index + 1]);
+                Reorder(lsvMetadataValues.Items[item.Index + 1], item);
                 item.Selected = false;
                 item.Focused = false;
                 AutoScrollListView(item.Index + 1);
@@ -295,13 +295,15 @@ namespace Metadata_Setter
                 return;
             }
 
-            if (e.Button == MouseButtons.Left)
+            if (e.Button == MouseButtons.Left && dragging)
             {
                 lsvMetadataValues.Cursor = listCursor;
                 dragging = false;
                 if (targetedItem != null && hoveredItem != null)
                 {
-                    SwapText(targetedItem, hoveredItem);
+                    Reorder(targetedItem, hoveredItem);
+                    targetedItem = null;
+                    hoveredItem = null;
                 }
             }
         }
@@ -319,6 +321,22 @@ namespace Metadata_Setter
                 dragging = true;
             }
         }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (tagName != TagName.Track)
+            {
+                return;
+            }
+
+            if (dragging && !lsvMetadataValues.Bounds.Contains(e.Location))
+            {
+                lsvMetadataValues.Cursor = listCursor;
+                dragging = false;
+            }
+        }
+
         //
         // Various utility functions
         //
@@ -330,11 +348,28 @@ namespace Metadata_Setter
             lsvMetadataValues.Focus();
         }
 
-        private void SwapText(ListViewItem item1, ListViewItem item2)
+        private void Reorder(ListViewItem item1, ListViewItem item2)
         {
-            string temp = item1.SubItems[1].Text;
-            item1.SubItems[1].Text = item2.SubItems[1].Text;
-            item2.SubItems[1].Text = temp;
+            // item1 is the beginning
+            if (item1.Index < item2.Index)
+            {
+                string placeToBegin = item2.SubItems[1].Text;
+                for (int i = item2.Index; i > item1.Index; --i)
+                {
+                    lsvMetadataValues.Items[i].SubItems[1].Text = lsvMetadataValues.Items[i - 1].SubItems[1].Text;
+                }
+                item1.SubItems[1].Text = placeToBegin;
+            }
+            // item2 is the beginning
+            else
+            {
+                string placeToBegin = item1.SubItems[1].Text;
+                for (int i = item1.Index; i > item2.Index; --i)
+                {
+                    lsvMetadataValues.Items[i].SubItems[1].Text = lsvMetadataValues.Items[i - 1].SubItems[1].Text;
+                }
+                item2.SubItems[1].Text = placeToBegin;
+            }
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -359,6 +394,7 @@ namespace Metadata_Setter
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        // TODO : Make this method asynchronous
         private void RenderFileTree(string path)
         {
             var itemsBefore = lsvFiles.Items.OfType<ListViewItem>().ToArray();
@@ -465,7 +501,7 @@ namespace Metadata_Setter
                     tagName = (TagName)(-1);
                     return;
                 }
-                tagName = Enum.Parse<TagName>((cboMetadataList.SelectedItem as TagDisplay).Value);
+                tagName = Enum.Parse<TagName>((cboMetadataList.SelectedItem as TagDisplay)!.Value);
             }
             catch (Exception)
             {
