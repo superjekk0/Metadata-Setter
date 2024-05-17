@@ -175,6 +175,7 @@
             ImgIcons.TransparentColor = Color.Transparent;
             ImgIcons.Images.SetKeyName(0, "folderIcon.png");
             ImgIcons.Images.SetKeyName(1, "fileIcon.png");
+            ImgIcons.Images.SetKeyName(2, "grab2.png");
             // 
             // BtnUpperFolder
             // 
@@ -197,7 +198,6 @@
             // 
             // lsvMetadataValues
             // 
-            lsvMetadataValues.Cursor = Cursors.Cross;
             lsvMetadataValues.FullRowSelect = true;
             lsvMetadataValues.Location = new Point(39, 193);
             lsvMetadataValues.MultiSelect = false;
@@ -206,8 +206,9 @@
             lsvMetadataValues.TabIndex = 15;
             lsvMetadataValues.UseCompatibleStateImageBehavior = false;
             lsvMetadataValues.View = View.Details;
-            lsvMetadataValues.ItemMouseHover += LsvMetadataValues_ItemMouseHover;
+            lsvMetadataValues.MouseDown += LsvMetadataValues_MouseDown;
             lsvMetadataValues.MouseMove += LsvMetadataValues_MouseMove;
+            lsvMetadataValues.MouseUp += LsvMetadataValues_MouseUp;
             // 
             // grpTrackOrder
             // 

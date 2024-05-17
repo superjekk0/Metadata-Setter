@@ -13,4 +13,8 @@
     <PackageReference Include="TagLibSharp" Version="2.3.0" />
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy /y $(ProjectDir)*.ico $(TargetDir)" />
+  </Target>
+
 </Project>

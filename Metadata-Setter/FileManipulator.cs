@@ -4,6 +4,7 @@
 
 using Metadata_Setter.Models;
 using System.ComponentModel;
+using System.Drawing.Imaging;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using TagLib;
@@ -18,6 +19,8 @@ namespace Metadata_Setter
         ListViewItem? targetedItem = null;
         ListViewItem? hoveredItem = null;
         private bool dragging = false;
+        private readonly Cursor listCursor = new Cursor("list.ico");
+        private readonly Cursor grabCursor = new Cursor("grab.ico");
 
         public FrmFileManipulator()
         {
@@ -261,43 +264,50 @@ namespace Metadata_Setter
             {
                 return;
             }
-            switch (e.Button)
+
+            if (!dragging)
             {
-                case MouseButtons.None:
-                    dragging = false;
-                    Cursor = Cursors.Default;
-                    break;
-                case MouseButtons.Left:
-                    dragging = true;
-                    Cursor = Cursors.SizeAll;
-                    break;
-                case MouseButtons.Right:
-                    break;
+                targetedItem = lsvMetadataValues.GetItemAt(e.X, e.Y);
+            }
+            else
+            {
+                if (hoveredItem != null && hoveredItem != lsvMetadataValues.GetItemAt(e.X, e.Y))
+                {
+                    hoveredItem.Selected = false;
+                }
+                hoveredItem = lsvMetadataValues.GetItemAt(e.X, e.Y);
+                if (hoveredItem != null)
+                {
+                    hoveredItem.Selected = true;
+                }
             }
         }
 
-        private void LsvMetadataValues_ItemMouseHover(object sender, ListViewItemMouseHoverEventArgs e)
+        private void LsvMetadataValues_MouseUp(object sender, MouseEventArgs e)
         {
             if (tagName != TagName.Track)
             {
                 return;
             }
 
-            if (!dragging)
+            if (e.Button == MouseButtons.Left)
             {
-                targetedItem = e.Item;
+                lsvMetadataValues.Cursor = listCursor;
+                dragging = false;
             }
-            else
+        }
+
+        private void LsvMetadataValues_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (tagName != TagName.Track)
             {
-                if (hoveredItem != null)
-                {
-                    hoveredItem.Selected = false;
-                }
-                hoveredItem = e.Item;
-                if (hoveredItem != null)
-                {
-                    hoveredItem.Selected = true;
-                }
+                return;
+            }
+
+            if (e.Button == MouseButtons.Left)
+            {
+                lsvMetadataValues.Cursor = grabCursor;
+                dragging = true;
             }
         }
         //
@@ -944,6 +954,7 @@ namespace Metadata_Setter
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
                     lblSelectMetadata.Text = "Select metadata to apply";
                     lsvMetadataValues.AllowDrop = false;
+                    lsvMetadataValues.Cursor = Cursors.Default;
                     grpTrackOrder.Visible = false;
                     break;
                 case TagName.Track:
@@ -952,6 +963,7 @@ namespace Metadata_Setter
                     lsvMetadataValues.Columns.Add("Reference", "Title or File Name", lsvMetadataValues.Width - 50);
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.Nonclickable;
                     lsvMetadataValues.AllowDrop = true;
+                    lsvMetadataValues.Cursor = listCursor;
                     grpTrackOrder.Visible = true;
                     break;
                     //case TagName.TrackCount:
