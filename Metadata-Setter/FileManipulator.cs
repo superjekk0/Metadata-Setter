@@ -183,6 +183,7 @@ namespace Metadata_Setter
         private void This_Click(object sender, EventArgs e)
         {
             lsvFiles.SelectedIndices.Clear();
+            lsvMetadataValues.SelectedIndices.Clear();
             this.ActiveControl = null;
         }
 
@@ -229,9 +230,7 @@ namespace Metadata_Setter
             if (item != null && item.Index > 0)
             {
                 btnMetadataChange.Enabled = true;
-                string temp = item.SubItems[1].Text;
-                item.SubItems[1].Text = lsvMetadataValues.Items[item.Index - 1].SubItems[1].Text;
-                lsvMetadataValues.Items[item.Index - 1].SubItems[1].Text = temp;
+                SwapText(item, lsvMetadataValues.Items[item.Index - 1]);
                 item.Selected = false;
                 item.Focused = false;
                 AutoScrollListView(item.Index - 1);
@@ -249,9 +248,7 @@ namespace Metadata_Setter
             if (item != null && item.Index < lsvMetadataValues.Items.Count - 1)
             {
                 btnMetadataChange.Enabled = true;
-                string temp = item.SubItems[1].Text;
-                item.SubItems[1].Text = lsvMetadataValues.Items[item.Index + 1].SubItems[1].Text;
-                lsvMetadataValues.Items[item.Index + 1].SubItems[1].Text = temp;
+                SwapText(item, lsvMetadataValues.Items[item.Index + 1]);
                 item.Selected = false;
                 item.Focused = false;
                 AutoScrollListView(item.Index + 1);
@@ -279,6 +276,14 @@ namespace Metadata_Setter
                 if (hoveredItem != null)
                 {
                     hoveredItem.Selected = true;
+                    if (hoveredItem.Index > 0 && lsvMetadataValues.TopItem == hoveredItem)
+                    {
+                        lsvMetadataValues.EnsureVisible(lsvMetadataValues.TopItem.Index - 1);
+                    }
+                    else
+                    {
+                        hoveredItem.EnsureVisible();
+                    }
                 }
             }
         }
@@ -294,6 +299,10 @@ namespace Metadata_Setter
             {
                 lsvMetadataValues.Cursor = listCursor;
                 dragging = false;
+                if (targetedItem != null && hoveredItem != null)
+                {
+                    SwapText(targetedItem, hoveredItem);
+                }
             }
         }
 
@@ -319,6 +328,13 @@ namespace Metadata_Setter
             lsvMetadataValues.Items[index].Focused = true;
             lsvMetadataValues.Items[index].EnsureVisible();
             lsvMetadataValues.Focus();
+        }
+
+        private void SwapText(ListViewItem item1, ListViewItem item2)
+        {
+            string temp = item1.SubItems[1].Text;
+            item1.SubItems[1].Text = item2.SubItems[1].Text;
+            item2.SubItems[1].Text = temp;
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
