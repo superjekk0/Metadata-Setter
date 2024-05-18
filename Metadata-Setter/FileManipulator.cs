@@ -4,7 +4,9 @@
 
 using Metadata_Setter.Models;
 using System.ComponentModel;
+using System.Drawing.Imaging;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using TagLib;
 
 namespace Metadata_Setter
@@ -13,38 +15,44 @@ namespace Metadata_Setter
     {
         private string repository = "";
         private List<FileDisplay> files = new List<FileDisplay>();
+        private TagName tagName;
+        ListViewItem? targetedItem = null;
+        ListViewItem? hoveredItem = null;
+        private bool dragging = false;
+        private readonly Cursor listCursor = new Cursor("list.ico");
+        private readonly Cursor grabCursor = new Cursor("grab.ico");
+
         public FrmFileManipulator()
         {
             // TODO : Localize the Winform
             InitializeComponent();
             repository = Environment.GetFolderPath(Environment.SpecialFolder.Personal) + '\\';
-            ColumnHeader header = new ColumnHeader
-            {
-                Text = "",
-                Name = "Type",
-                Width = LsvFiles.Width
-            };
 
-            LsvFiles.Columns.Add(header);
-            LsvFiles.HeaderStyle = ColumnHeaderStyle.None;
+            lsvFiles.Columns.Add("", "Type", lsvFiles.Width);
+            lsvFiles.HeaderStyle = ColumnHeaderStyle.None;
 
-            CboPath.Items.Add(repository);
-            CboPath.Items.AddRange(Directory.GetDirectories(repository).OrderBy(f => f).ToArray());
-            CboPath.Text = repository;
+            lsvMetadataValues.Columns.Add("Data", "Data", lsvMetadataValues.Width);
+            lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
+            lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
 
-            RenderFileTree(CboPath.Text);
+            cboPath.Items.Add(repository);
+            cboPath.Items.AddRange(Directory.GetDirectories(repository).OrderBy(f => f).ToArray());
+            cboPath.Text = repository;
+
+            RenderFileTree(cboPath.Text);
             // This part will be usefull for translation
-            CboMetadataList.DataSource = Enum.GetValues(typeof(TagName))
+            cboMetadataList.DataSource = Enum.GetValues(typeof(TagName))
                 .Cast<TagName>()
                 .Select(t => new TagDisplay
                 {
-                    Description = (Attribute.GetCustomAttribute(t.GetType().GetField(t.ToString()), typeof(DescriptionAttribute)) as DescriptionAttribute)?.Description ?? t.ToString()
-                        , Value = t.ToString()
+                    Description = (Attribute.GetCustomAttribute(t.GetType().GetField(t.ToString())!, typeof(DescriptionAttribute)) as DescriptionAttribute)?.Description ?? t.ToString()
+                        ,
+                    Value = t.ToString()
                 }
                 )
                 .ToArray();
-            CboMetadataList.DisplayMember = "Description";
-            CboMetadataList.ValueMember = "Value";
+            cboMetadataList.DisplayMember = "Description";
+            cboMetadataList.ValueMember = "Value";
         }
 
         private void MnuOptionsFileExit_Click(object sender, EventArgs e)
@@ -54,35 +62,35 @@ namespace Metadata_Setter
 
         private void CboPath_DropDown(object sender, EventArgs e)
         {
-            CboPath.BeginUpdate();
+            cboPath.BeginUpdate();
 
-            foreach (var item in CboPath.Items)
+            foreach (var item in cboPath.Items)
             {
                 if (item.ToString() != repository)
                 {
-                    CboPath.Items.Remove(item);
+                    cboPath.Items.Remove(item);
                 }
             }
             try
             {
-                CboPath.Items.AddRange(Directory.GetDirectories(repository).Select(d => d += '\\').ToArray());
+                cboPath.Items.AddRange(Directory.GetDirectories(repository).Select(d => d += '\\').ToArray());
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Directory access", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            CboPath.EndUpdate();
+            cboPath.EndUpdate();
         }
 
         private void LsvFiles_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            ListViewItem target = LsvFiles.Items[LsvFiles.SelectedIndices[0]];
+            ListViewItem target = lsvFiles.Items[lsvFiles.SelectedIndices[0]];
             if (target.ImageIndex == 0)
             {
-                CboPath.Text += target.Text + '\\';
+                cboPath.Text += target.Text + '\\';
 
-                RenderFileTree(CboPath.Text);
+                RenderFileTree(cboPath.Text);
             }
         }
 
@@ -90,15 +98,15 @@ namespace Metadata_Setter
         {
             FolderBrowserDialog dialog = new FolderBrowserDialog()
             {
-                InitialDirectory = CboPath.Text
+                InitialDirectory = cboPath.Text
             };
 
             DialogResult result = dialog.ShowDialog();
 
             if (result == DialogResult.OK)
             {
-                CboPath.Text = dialog.SelectedPath + (dialog.SelectedPath.LastIndexOf('\\') == dialog.SelectedPath.Length - 1 ? "" : "\\");
-                RenderFileTree(CboPath.Text);
+                cboPath.Text = dialog.SelectedPath + (dialog.SelectedPath.LastIndexOf('\\') == dialog.SelectedPath.Length - 1 ? "" : "\\");
+                RenderFileTree(cboPath.Text);
             }
         }
 
@@ -107,43 +115,42 @@ namespace Metadata_Setter
             DirectoryInfo? parent = Directory.GetParent(repository);
             if (parent != null && parent.Parent != null)
             {
-                CboPath.Text = parent.Parent.FullName + (parent.Root.FullName == parent.Parent.FullName ? "" : "\\");
-                RenderFileTree(CboPath.Text);
+                cboPath.Text = parent.Parent.FullName + (parent.Root.FullName == parent.Parent.FullName ? "" : "\\");
+                RenderFileTree(cboPath.Text);
             }
         }
 
         private void CboMetadataList_IndexChanged(object sender, EventArgs e)
         {
-            UpdateTagList(LsvFiles.SelectedIndices);
-            DisplayMetadataContext();
+            UpdateTagList(lsvFiles.SelectedIndices);
         }
 
         private void LsvFiles_SelectedIndexChanged(object sender, EventArgs e)
         {
-            PrgModificationApply.Maximum = (LsvFiles.SelectedIndices.Count == 0 ? files.Count : LsvFiles.SelectedIndices.Count);
-            UpdateTagList(LsvFiles.SelectedIndices);
+            prgModificationApply.Maximum = (lsvFiles.SelectedIndices.Count == 0 ? files.Count : lsvFiles.SelectedIndices.Count);
+            UpdateTagList(lsvFiles.SelectedIndices);
         }
 
         private void BtnMetadataChange_Click(object sender, EventArgs e)
         {
-            if (CboMetadataList.SelectedIndex == -1)
+            if (cboMetadataList.SelectedIndex == -1)
             {
                 return;
             }
 
             if (!ValidInput())
             {
-                MessageBox.Show(string.Format("'{0}' is not a valid value for '{1}'", TxtApplyValue.Text, CboMetadataList.Text), "Wrong value", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(string.Format("'{0}' is not a valid value for '{1}'", txtApplyValue.Text, cboMetadataList.Text), "Wrong value", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
             Cursor.Current = Cursors.WaitCursor;
             this.Enabled = false;
             List<TagLib.File> aimedFiles = new List<TagLib.File>();
-            if (LsvFiles.SelectedIndices.Count != 0)
+            if (lsvFiles.SelectedIndices.Count != 0)
             {
                 aimedFiles = files
-                    .Where(f => LsvFiles.SelectedIndices.Contains(f.Index))
+                    .Where(f => lsvFiles.SelectedIndices.Contains(f.Index))
                     .Select(f => f.File)
                     .ToList();
             }
@@ -162,56 +169,257 @@ namespace Metadata_Setter
             foreach (TagLib.File file in aimedFiles)
             {
                 EditFile(file);
-                ++PrgModificationApply.Value;
+                ++prgModificationApply.Value;
             }
 
             aimedFiles.ForEach(f => f.Save());
             MessageBox.Show("All files have been modified.", "Modification complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            PrgModificationApply.Value = PrgModificationApply.Minimum;
-            UpdateTagList(LsvFiles.SelectedIndices);
+            prgModificationApply.Value = prgModificationApply.Minimum;
+            UpdateTagList(lsvFiles.SelectedIndices);
             this.Enabled = true;
-            BtnMetadataChange.Enabled = false;
+            btnMetadataChange.Enabled = false;
         }
 
         private void This_Click(object sender, EventArgs e)
         {
-            LsvFiles.SelectedIndices.Clear();
+            lsvFiles.SelectedIndices.Clear();
+            lsvMetadataValues.SelectedIndices.Clear();
             this.ActiveControl = null;
+        }
+
+        private void BtnUp_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index > 0)
+            {
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index - 1);
+            }
+        }
+
+        private void BtnDown_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index < lsvMetadataValues.Items.Count - 1)
+            {
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index + 1);
+            }
+        }
+
+        private void BtnHigher_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index > 0)
+            {
+                btnMetadataChange.Enabled = true;
+                Reorder(item, lsvMetadataValues.Items[item.Index - 1]);
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index - 1);
+            }
+        }
+
+        private void BtnLower_Click(object sender, EventArgs e)
+        {
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                return;
+            }
+
+            ListViewItem? item = lsvMetadataValues.SelectedItems[0];
+            if (item != null && item.Index < lsvMetadataValues.Items.Count - 1)
+            {
+                btnMetadataChange.Enabled = true;
+                Reorder(lsvMetadataValues.Items[item.Index + 1], item);
+                item.Selected = false;
+                item.Focused = false;
+                AutoScrollListView(item.Index + 1);
+            }
+        }
+
+        private void LsvMetadataValues_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (tagName != TagName.Track)
+            {
+                return;
+            }
+
+            if (!dragging)
+            {
+                targetedItem = lsvMetadataValues.GetItemAt(e.X, e.Y);
+            }
+            else
+            {
+                if (hoveredItem != null && hoveredItem != lsvMetadataValues.GetItemAt(e.X, e.Y))
+                {
+                    hoveredItem.Selected = false;
+                }
+                hoveredItem = lsvMetadataValues.GetItemAt(e.X, e.Y);
+                if (hoveredItem != null)
+                {
+                    hoveredItem.Selected = true;
+                    if (hoveredItem.Index > 0 && lsvMetadataValues.TopItem == hoveredItem)
+                    {
+                        lsvMetadataValues.EnsureVisible(lsvMetadataValues.TopItem.Index - 1);
+                    }
+                    else
+                    {
+                        hoveredItem.EnsureVisible();
+                    }
+                }
+            }
+        }
+
+        private void LsvMetadataValues_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (tagName != TagName.Track)
+            {
+                return;
+            }
+
+            if (e.Button == MouseButtons.Left && dragging)
+            {
+                lsvMetadataValues.Cursor = listCursor;
+                dragging = false;
+                if (targetedItem != null && hoveredItem != null)
+                {
+                    Reorder(targetedItem, hoveredItem);
+                    targetedItem = null;
+                    hoveredItem = null;
+                }
+            }
+        }
+
+        private void LsvMetadataValues_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (tagName != TagName.Track)
+            {
+                return;
+            }
+
+            if (e.Button == MouseButtons.Left)
+            {
+                lsvMetadataValues.Cursor = grabCursor;
+                dragging = true;
+            }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (tagName != TagName.Track)
+            {
+                return;
+            }
+
+            if (dragging && !lsvMetadataValues.Bounds.Contains(e.Location))
+            {
+                lsvMetadataValues.Cursor = listCursor;
+                dragging = false;
+            }
         }
 
         //
         // Various utility functions
         //
+        private void AutoScrollListView(int index)
+        {
+            lsvMetadataValues.Items[index].Selected = true;
+            lsvMetadataValues.Items[index].Focused = true;
+            lsvMetadataValues.Items[index].EnsureVisible();
+            lsvMetadataValues.Focus();
+        }
+
+        private void Reorder(ListViewItem item1, ListViewItem item2)
+        {
+            // item1 is the beginning
+            if (item1.Index < item2.Index)
+            {
+                string placeToBegin = item2.SubItems[1].Text;
+                for (int i = item2.Index; i > item1.Index; --i)
+                {
+                    lsvMetadataValues.Items[i].SubItems[1].Text = lsvMetadataValues.Items[i - 1].SubItems[1].Text;
+                }
+                item1.SubItems[1].Text = placeToBegin;
+            }
+            // item2 is the beginning
+            else
+            {
+                string placeToBegin = item1.SubItems[1].Text;
+                for (int i = item1.Index; i > item2.Index; --i)
+                {
+                    lsvMetadataValues.Items[i].SubItems[1].Text = lsvMetadataValues.Items[i - 1].SubItems[1].Text;
+                }
+                item2.SubItems[1].Text = placeToBegin;
+            }
+        }
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (ActiveControl == CboMetadataList)
+            if (ActiveControl == cboMetadataList)
             {
-                CboMetadataList.DroppedDown = false;
+                if (keyData == Keys.Enter)
+                {
+                    //TxtApplyValue.Focus();
+                    UpdateTagList(lsvFiles.SelectedIndices);
+                }
+                cboMetadataList.DroppedDown = false;
             }
-            else if (ActiveControl == CboPath && keyData == Keys.Enter)
+            else if (ActiveControl == cboPath && keyData == Keys.Enter)
             {
-                RenderFileTree(CboPath.Text +
-                    (CboPath.Text.Length - 1 == CboPath.Text.LastIndexOf('\\') ? "" : "\\"));
-                CboPath.Text = repository;
-                LsvFiles.Focus();
+                RenderFileTree(cboPath.Text +
+                    (cboPath.Text.Length - 1 == cboPath.Text.LastIndexOf('\\') ? "" : "\\"));
+                cboPath.Text = repository;
+                lsvFiles.Focus();
                 return true;
             }
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        // TODO : Make this method asynchronous
         private void RenderFileTree(string path)
         {
-            var itemsBefore = LsvFiles.Items.OfType<ListViewItem>().ToArray();
-            CboPath.BeginUpdate();
+            var itemsBefore = lsvFiles.Items.OfType<ListViewItem>().ToArray();
+            cboPath.BeginUpdate();
 
             try
             {
                 // It should not be necessary to make a copy of files, as if the directory
                 // does not exist, the program will already have thrown an exception.
-                LsvFiles.Items.Clear();
-                LsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(d.Substring(d.LastIndexOf('\\') + 1), 0)).ToArray());
-                LsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(f.Substring(f.LastIndexOf('\\') + 1), 1)).ToArray());
-                files = LsvFiles.Items.OfType<ListViewItem>()
+                if (EnvironmentVariable().IsMatch(path))
+                {
+                    int firstPercent = path.IndexOf('%');
+                    int secondPercent = path.IndexOf('%', firstPercent + 1);
+                    string variable = path.Substring(firstPercent, secondPercent - firstPercent + 1);
+                    if (Environment.GetEnvironmentVariable(variable.Replace("%", "")) == null)
+                    {
+                        throw new Exception($"The environment variable '{variable}' does not exist");
+                    }
+                    path = path.Replace(variable, Environment.GetEnvironmentVariable(variable.Replace("%", "")));
+
+                }
+                lsvFiles.Items.Clear();
+                lsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(GetFileName(d), 0)).ToArray());
+                lsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(GetFileName(f), 1)).ToArray());
+                files = lsvFiles.Items.OfType<ListViewItem>()
                     .Where(i => i.ImageIndex != 0 && TagLib.SupportedMimeType
                     .AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
                     .Select(i => new FileDisplay(TagLib.File.Create(path + i.Text), i.Index))
@@ -220,32 +428,34 @@ namespace Metadata_Setter
             }
             catch (Exception ex)
             {
-                LsvFiles.Items.Clear();
-                LsvFiles.Items.AddRange(itemsBefore);
+                lsvFiles.Items.Clear();
+                lsvFiles.Items.AddRange(itemsBefore);
                 MessageBox.Show(ex.Message, "Directory access", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                CboPath.Text = repository;
+                cboPath.Text = repository;
             }
 
-            CboPath.EndUpdate();
+            cboPath.EndUpdate();
 
-            UpdateTagList(LsvFiles.SelectedIndices);
+            UpdateTagList(lsvFiles.SelectedIndices);
         }
 
         private void UpdateRepository(string path)
         {
             repository = path;
-            PrgModificationApply.Maximum = files.Count;
+            prgModificationApply.Maximum = files.Count;
         }
 
         private void UpdateTagList(ListView.SelectedIndexCollection selectedIndices)
         {
-            if (CboMetadataList.SelectedIndex == -1)
+            ExtractTagName();
+            DisplayMetadataContext();
+            lsvMetadataValues.Items.Clear();
+
+            if (cboMetadataList.SelectedIndex == -1)
             {
-                BtnMetadataChange.Enabled = false;
+                btnMetadataChange.Enabled = false;
                 return;
             }
-
-            LstMetadataValues.Items.Clear();
 
             List<TagLib.File> aimedFiles;
             if (selectedIndices.Count != 0)
@@ -260,126 +470,149 @@ namespace Metadata_Setter
                 aimedFiles = files.Select(f => f.File).ToList();
             }
 
-            LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
-            BtnMetadataChange.Enabled = aimedFiles.Count != 0;
+            //LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
+            object[] hitFiles = FileTags(aimedFiles);
+            List<ListViewItem> items = new List<ListViewItem>();
+            for (int i = 0; i < hitFiles.Length; i++)
+            {
+                items.Add(MetaData(hitFiles[i], i));
+            }
+            lsvMetadataValues.Items.AddRange(items.ToArray());
+            btnMetadataChange.Enabled = aimedFiles.Count != 0;
         }
 
-        private TagName ExtractTagName(string tag)
+        private static ListViewItem MetaData(object file, int itterator)
+        {
+            if (file is TrackDisplay)
+            {
+                ListViewItem item = new ListViewItem((itterator + 1).ToString());
+                item.SubItems.Add(file.ToString());
+                return item;
+            }
+            return new ListViewItem(file.ToString());
+        }
+
+        private void ExtractTagName()
         {
             try
             {
-                return Enum.Parse<TagName>((CboMetadataList.SelectedItem as TagDisplay).Value);
+                if (cboMetadataList.SelectedItem == null)
+                {
+                    tagName = (TagName)(-1);
+                    return;
+                }
+                tagName = Enum.Parse<TagName>((cboMetadataList.SelectedItem as TagDisplay)!.Value);
             }
             catch (Exception)
             {
-                return (TagName) (-1);
+                tagName = (TagName)(-1);
             }
         }
 
-        private object[] FileTags(List<TagLib.File> files, string tag)
+        private object[] FileTags(List<TagLib.File> files)
         {
-            switch (ExtractTagName(tag))
+            switch (tagName)
             {
                 case TagName.Album:
-                    return files.Select(f => f.Tag.Album == null ? "" : f.Tag.Album)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Album != null)
+                        .Select(f => f.Tag.Album)
                         .Distinct()
                         .ToArray();
                 case TagName.AlbumArtists:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.AlbumArtists))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.AlbumArtists.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.AlbumArtists))
                         .Distinct()
                         .ToArray();
                 case TagName.AmazonID:
-                    return files.Select(f => f.Tag.AmazonId == null ? "" : f.Tag.AmazonId)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.AmazonId != null)
+                        .Select(f => f.Tag.AmazonId)
                         .Distinct()
                         .ToArray();
                 case TagName.Artists:
                     break;
                 case TagName.BeatsPerMinute:
-                    return files.Select(f => f.Tag.BeatsPerMinute.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.BeatsPerMinute != 0)
+                        .Select(f => f.Tag.BeatsPerMinute.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.Comment:
-                    return files.Select(f => f.Tag.Comment == null ? "" : f.Tag.Comment)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Comment != null)
+                        .Select(f => f.Tag.Comment)
                         .Distinct()
                         .ToArray();
                 case TagName.Composers:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.Composers))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.Composers.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.Composers))
                         .Distinct()
                         .ToArray();
                 case TagName.ComposersSort:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.ComposersSort))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.ComposersSort.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.ComposersSort))
                         .Distinct()
                         .ToArray();
                 case TagName.Conductor:
-                    return files.Select(f => f.Tag.Conductor == null ? "" : f.Tag.Conductor)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Conductor != null)
+                        .Select(f => f.Tag.Conductor)
                         .Distinct()
                         .ToArray();
                 case TagName.Copyright:
-                    return files.Select(f => f.Tag.Copyright == null ? "" : f.Tag.Copyright)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Copyright != null)
+                        .Select(f => f.Tag.Copyright)
                         .Distinct()
                         .ToArray();
                 case TagName.Description:
-                    return files.Select(f => f.Tag.Description == null ? "" : f.Tag.Description)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Description != null)
+                        .Select(f => f.Tag.Description)
                         .Distinct()
                         .ToArray();
                 case TagName.Disc:
-                    return files.Select(f => f.Tag.Disc.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.Disc != 0)
+                        .Select(f => f.Tag.Disc.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.DiscCount:
-                    return files.Select(f => f.Tag.DiscCount.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.DiscCount != 0)
+                        .Select(f => f.Tag.DiscCount.ToString())
                         .Distinct()
                         .ToArray();
                 case TagName.Genre:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.Genres))
-                        .Where(f => f.Array.Length != 0)
+                    return files.Where(f => f.Tag.Genres.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.Genres))
                         .Distinct()
                         .ToArray();
                 case TagName.Grouping:
-                    return files.Select(f => f.Tag.Grouping == null ? "" : f.Tag.Grouping)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Grouping != null)
+                        .Select(f => f.Tag.Grouping)
                         .Distinct()
                         .ToArray();
                 case TagName.InitialKey:
-                    return files.Select(f => f.Tag.InitialKey == null ? "" : f.Tag.InitialKey)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.InitialKey != null)
+                        .Select(f => f.Tag.InitialKey)
                         .Distinct()
                         .ToArray();
                 case TagName.ISRC:
-                    return files.Select(f => f.Tag.ISRC == null ? "" : f.Tag.ISRC)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.ISRC != null)
+                        .Select(f => f.Tag.ISRC)
                         .Distinct()
                         .ToArray();
                 case TagName.Lyrics:
-                    return files.Select(f => f.Tag.Lyrics == null ? "" : f.Tag.Lyrics)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Lyrics != null)
+                        .Select(f => f.Tag.Lyrics)
                         .Distinct()
                         .ToArray();
                 case TagName.Performers:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.Performers))
-                        .Where(a => a.Array.Length != 0)
+                    return files.Where(a => a.Tag.Performers.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.Performers))
                         .Distinct()
                         .ToArray();
                 case TagName.PerformersSort:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.PerformersSort))
-                        .Where(a => a.Array.Length != 0)
+                    return files.Where(a => a.Tag.PerformersSort.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.PerformersSort))
                         .Distinct()
                         .ToArray();
                 case TagName.PerformersRole:
-                    return files.Select(f => new AttributeArray<string>(f.Tag.PerformersRole))
-                        .Where(a => a.Array.Length != 0)
+                    return files.Where(a => a.Tag.PerformersRole.Length != 0)
+                        .Select(f => new AttributeArray<string>(f.Tag.PerformersRole))
                         .Distinct()
                         .ToArray();
                 //case TagName.Pictures:
@@ -388,43 +621,43 @@ namespace Metadata_Setter
                 //        .Distinct()
                 //        .ToArray();
                 case TagName.Publisher:
-                    return files.Select(f => f.Tag.Publisher == null ? "" : f.Tag.Publisher)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Publisher != null)
+                        .Select(f => f.Tag.Publisher)
                         .Distinct()
                         .ToArray();
                 case TagName.RemixedBy:
-                    return files.Select(f => f.Tag.RemixedBy == null ? "" : f.Tag.RemixedBy)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.RemixedBy != null)
+                        .Select(f => f.Tag.RemixedBy)
                         .Distinct()
                         .ToArray();
                 case TagName.Subtitle:
-                    return files.Select(f => f.Tag.Subtitle == null ? "" : f.Tag.Subtitle)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Subtitle != null)
+                        .Select(f => f.Tag.Subtitle)
                         .Distinct()
                         .ToArray();
                 case TagName.Title:
-                    return files.Select(f => f.Tag.Title == null ? "" : f.Tag.Title)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.Title != null)
+                        .Select(f => f.Tag.Title)
                         .Distinct()
                         .ToArray();
                 case TagName.TitleSort:
-                    return files.Select(f => f.Tag.TitleSort == null ? "" : f.Tag.TitleSort)
-                        .Where(f => f != "")
+                    return files.Where(f => f.Tag.TitleSort != null)
+                        .Select(f => f.Tag.TitleSort)
                         .Distinct()
                         .ToArray();
                 case TagName.Track:
-                    return files.Select(f => f.Tag.Track.ToString())
-                        .Where(f => f != "0")
-                        .Distinct()
+                    return files
+                        .Select(f => new TrackDisplay(f))
+                        .OrderBy(f => f)
                         .ToArray();
-                case TagName.TrackCount:
-                    return files.Select(f => f.Tag.TrackCount.ToString())
-                        .Where(f => f != "0")
-                        .Distinct()
-                        .ToArray();
+                //case TagName.TrackCount:
+                //    return files.Where(f => f.Tag.TrackCount != 0)
+                //        .Select(f => f.Tag.TrackCount.ToString())
+                //        .Distinct()
+                //        .ToArray();
                 case TagName.Year:
-                    return files.Select(f => f.Tag.Year.ToString())
-                        .Where(f => f != "0")
+                    return files.Where(f => f.Tag.Year != 0)
+                        .Select(f => f.Tag.Year.ToString())
                         .Distinct()
                         .ToArray();
                 default:
@@ -435,96 +668,97 @@ namespace Metadata_Setter
 
         private void EditFile(TagLib.File file)
         {
-            switch (ExtractTagName(CboMetadataList.Text))
+            switch (tagName)
             {
                 case TagName.Album:
-                    file.Tag.Album = TxtApplyValue.Text;
+                    file.Tag.Album = txtApplyValue.Text;
                     break;
                 case TagName.AlbumArtists:
-                    file.Tag.AlbumArtists = TxtApplyValue.Text.Split(';');
+                    file.Tag.AlbumArtists = txtApplyValue.Text.Split(';');
                     break;
                 case TagName.AmazonID:
-                    file.Tag.AmazonId = TxtApplyValue.Text;
+                    file.Tag.AmazonId = txtApplyValue.Text;
                     break;
                 case TagName.Artists:
+                    //file.Tag.Artists = txtApplyValue.Text.Split(';');
                     break;
                 case TagName.BeatsPerMinute:
-                    file.Tag.BeatsPerMinute = (uint)NumNumberValues.Value;
+                    file.Tag.BeatsPerMinute = (uint)numValues.Value;
                     break;
                 case TagName.Comment:
-                    file.Tag.Comment = TxtApplyValue.Text;
+                    file.Tag.Comment = txtApplyValue.Text;
                     break;
                 case TagName.Composers:
-                    file.Tag.Composers = TxtApplyValue.Text.Split(';');
+                    file.Tag.Composers = txtApplyValue.Text.Split(';');
                     break;
                 case TagName.ComposersSort:
-                    file.Tag.ComposersSort = TxtApplyValue.Text.Split(';');
+                    file.Tag.ComposersSort = txtApplyValue.Text.Split(';');
                     break;
                 case TagName.Conductor:
-                    file.Tag.Conductor = TxtApplyValue.Text;
+                    file.Tag.Conductor = txtApplyValue.Text;
                     break;
                 case TagName.Copyright:
-                    file.Tag.Copyright = TxtApplyValue.Text;
+                    file.Tag.Copyright = txtApplyValue.Text;
                     break;
                 case TagName.Description:
-                    file.Tag.Description = TxtApplyValue.Text;
+                    file.Tag.Description = txtApplyValue.Text;
                     break;
                 case TagName.Disc:
-                    file.Tag.Disc = (uint)NumNumberValues.Value;
+                    file.Tag.Disc = (uint)numValues.Value;
                     break;
                 case TagName.DiscCount:
-                    file.Tag.DiscCount = (uint)NumNumberValues.Value;
+                    file.Tag.DiscCount = (uint)numValues.Value;
                     break;
                 case TagName.Genre:
-                    file.Tag.Genres = TxtApplyValue.Text.Split(';');
+                    file.Tag.Genres = txtApplyValue.Text.Split(';');
                     break;
                 case TagName.Grouping:
-                    file.Tag.Grouping = TxtApplyValue.Text;
+                    file.Tag.Grouping = txtApplyValue.Text;
                     break;
                 case TagName.InitialKey:
-                    file.Tag.InitialKey = TxtApplyValue.Text;
+                    file.Tag.InitialKey = txtApplyValue.Text;
                     break;
                 case TagName.ISRC:
-                    file.Tag.ISRC = TxtApplyValue.Text;
+                    file.Tag.ISRC = txtApplyValue.Text;
                     break;
                 case TagName.Lyrics:
-                    file.Tag.Lyrics = TxtApplyValue.Text;
+                    file.Tag.Lyrics = txtApplyValue.Text;
                     break;
                 case TagName.Performers:
-                    file.Tag.Performers = TxtApplyValue.Text.Split(';');
+                    file.Tag.Performers = txtApplyValue.Text.Split(';');
                     break;
                 case TagName.PerformersSort:
-                    file.Tag.PerformersSort = TxtApplyValue.Text.Split(';');
+                    file.Tag.PerformersSort = txtApplyValue.Text.Split(';');
                     break;
                 case TagName.PerformersRole:
-                    file.Tag.PerformersRole = TxtApplyValue.Text.Split(';');
+                    file.Tag.PerformersRole = txtApplyValue.Text.Split(';');
                     break;
                 //case TagName.Pictures:
                 //    // TODO : Set a specific case for pictures
                 //    break;
                 case TagName.Publisher:
-                    file.Tag.Publisher = TxtApplyValue.Text;
+                    file.Tag.Publisher = txtApplyValue.Text;
                     break;
                 case TagName.RemixedBy:
-                    file.Tag.RemixedBy = TxtApplyValue.Text;
+                    file.Tag.RemixedBy = txtApplyValue.Text;
                     break;
                 case TagName.Subtitle:
-                    file.Tag.Subtitle = TxtApplyValue.Text;
+                    file.Tag.Subtitle = txtApplyValue.Text;
                     break;
                 case TagName.Title:
-                    file.Tag.Title = TxtApplyValue.Text;
+                    file.Tag.Title = txtApplyValue.Text;
                     break;
                 case TagName.TitleSort:
-                    file.Tag.TitleSort = TxtApplyValue.Text;
+                    file.Tag.TitleSort = txtApplyValue.Text;
                     break;
                 case TagName.Track:
-                    file.Tag.Track = (uint)NumNumberValues.Value;
-                    break;
-                case TagName.TrackCount:
-                    file.Tag.TrackCount = (uint)NumNumberValues.Value;
+                    TrackDisplay display = new TrackDisplay(file);
+                    file.Tag.Track = uint.Parse(lsvMetadataValues.Items.OfType<ListViewItem>()
+                        .First(i => i.SubItems[1].Text == display.ToString()).Text);
+                    file.Tag.TrackCount = (uint)lsvMetadataValues.Items.Count;
                     break;
                 case TagName.Year:
-                    file.Tag.Year = (uint)NumNumberValues.Value;
+                    file.Tag.Year = (uint)numValues.Value;
                     break;
                 default:
                     break;
@@ -533,7 +767,7 @@ namespace Metadata_Setter
 
         private bool ValidInput()
         {
-            switch (ExtractTagName(CboMetadataList.Text))
+            switch (tagName)
             {
                 case TagName.Album:
                 case TagName.AlbumArtists:
@@ -541,7 +775,7 @@ namespace Metadata_Setter
                 case TagName.Artists:
                     return true;
                 case TagName.BeatsPerMinute:
-                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 500;
+                    return numValues.Value >= 0 && numValues.Value <= 500;
                 case TagName.Comment:
                 case TagName.Composers:
                 case TagName.ComposersSort:
@@ -551,7 +785,7 @@ namespace Metadata_Setter
                     return true;
                 case TagName.Disc:
                 case TagName.DiscCount:
-                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= NumNumberValues.Maximum;
+                    return numValues.Value >= 0 && numValues.Value <= numValues.Maximum;
                 case TagName.Genre:
                 case TagName.Grouping:
                 case TagName.InitialKey:
@@ -571,10 +805,11 @@ namespace Metadata_Setter
                 case TagName.TitleSort:
                     return true;
                 case TagName.Track:
-                case TagName.TrackCount:
-                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= NumNumberValues.Maximum;
+                    return true;
+                //case TagName.TrackCount:
+                //    return numValues.Value >= 0 && numValues.Value <= numValues.Maximum;
                 case TagName.Year:
-                    return NumNumberValues.Value >= 0 && NumNumberValues.Value <= 9999;
+                    return numValues.Value >= 0 && numValues.Value <= 9999;
                 default:
                     return false;
             }
@@ -582,151 +817,222 @@ namespace Metadata_Setter
 
         private void DisplayMetadataContext()
         {
-            switch (ExtractTagName(CboMetadataList.Text))
+            switch (tagName)
             {
                 case TagName.Album:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = CboMetadataList.Text;
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = cboMetadataList.Text;
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.AlbumArtists:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Artist1;Artist2";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Artist1;Artist2";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.AmazonID:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Amazon ID";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Amazon ID";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Artists:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Artist1;Artist2";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Artist1;Artist2";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.BeatsPerMinute:
-                    TxtApplyValue.Visible = false;
-                    NumNumberValues.Minimum = 0;
-                    NumNumberValues.Maximum = 500;
-                    NumNumberValues.Value = 120;
-                    NumNumberValues.Visible = true;
+                    txtApplyValue.Visible = false;
+                    numValues.Minimum = 0;
+                    numValues.Maximum = 500;
+                    numValues.Value = 120;
+                    numValues.Visible = true;
                     break;
                 case TagName.Comment:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "This is a sample comment";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "This is a sample comment";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Composers:
                 case TagName.ComposersSort:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Composer1;Composer2";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Composer1;Composer2";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Conductor:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "John Smith";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "John Smith";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Copyright:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Record label company";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Record label company";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Description:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "This is a sample description";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "This is a sample description";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Disc:
                 case TagName.DiscCount:
                     // The maximum will most likely never be attained
-                    NumNumberValues.Visible = true;
-                    NumNumberValues.Minimum = 0;
-                    NumNumberValues.Maximum = 1000;
-                    NumNumberValues.Value = 1;
-                    TxtApplyValue.Visible = false;
+                    numValues.Visible = true;
+                    numValues.Minimum = 0;
+                    numValues.Maximum = 1000;
+                    numValues.Value = 1;
+                    txtApplyValue.Visible = false;
                     break;
                 case TagName.Genre:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Genre1;Genre2";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Genre1;Genre2";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Grouping:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Group description";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Group description";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.InitialKey:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "C#m";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "C#m";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.ISRC:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "AB-CD1-23-45678";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "AB-CD1-23-45678";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Lyrics:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "This is a sample Lyrics";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "This is a sample Lyrics";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Performers:
                 case TagName.PerformersSort:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Performer1;Performer2";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Performer1;Performer2";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.PerformersRole:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Piano;Bass";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Piano;Bass";
+                    txtApplyValue.Visible = true;
                     break;
                 //case TagName.Pictures:
                 //    break;
                 case TagName.Publisher:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Publisher";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Publisher";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.RemixedBy:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Remixer";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Remixer";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Subtitle:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "This is a Subtitle";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "This is a Subtitle";
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.Title:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = CboMetadataList.Text;
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = cboMetadataList.Text;
+                    txtApplyValue.Visible = true;
                     break;
                 case TagName.TitleSort:
-                    NumNumberValues.Visible = false;
-                    TxtApplyValue.PlaceholderText = "Title";
-                    TxtApplyValue.Visible = true;
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Title";
+                    txtApplyValue.Visible = true;
                     break;
-                case TagName.Track:
-                case TagName.TrackCount:
-                    NumNumberValues.Visible = true;
-                    NumNumberValues.Minimum = 0;
-                    NumNumberValues.Maximum = 1000;
-                    NumNumberValues.Value = 1;
-                    TxtApplyValue.Visible = false;
-                    break;
+                //case TagName.Track:
+                //case TagName.TrackCount:
+                //    numValues.Visible = true;
+                //    numValues.Minimum = 0;
+                //    numValues.Maximum = 1000;
+                //    numValues.Value = 1;
+                //    txtApplyValue.Visible = false;
+                //    break;
                 case TagName.Year:
-                    NumNumberValues.Visible = true;
-                    NumNumberValues.Minimum = 0;
-                    NumNumberValues.Maximum = 9999;
-                    NumNumberValues.Value = 2000;
-                    TxtApplyValue.Visible = false;
+                    numValues.Visible = true;
+                    numValues.Minimum = 0;
+                    numValues.Maximum = 9999;
+                    numValues.Value = 2000;
+                    txtApplyValue.Visible = false;
                     break;
                 default:
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "";
+                    txtApplyValue.Visible = true;
                     break;
             }
+            DisplayListViewDatas();
         }
+
+        private void DisplayListViewDatas()
+        {
+            switch (tagName)
+            {
+                case TagName.Album:
+                case TagName.AlbumArtists:
+                case TagName.AmazonID:
+                case TagName.Artists:
+                case TagName.BeatsPerMinute:
+                case TagName.Comment:
+                case TagName.Composers:
+                case TagName.ComposersSort:
+                case TagName.Conductor:
+                case TagName.Copyright:
+                case TagName.Description:
+                case TagName.Disc:
+                case TagName.DiscCount:
+                case TagName.Genre:
+                case TagName.Grouping:
+                case TagName.InitialKey:
+                case TagName.ISRC:
+                case TagName.Lyrics:
+                case TagName.Performers:
+                case TagName.PerformersSort:
+                case TagName.PerformersRole:
+                case TagName.Publisher:
+                case TagName.RemixedBy:
+                case TagName.Subtitle:
+                case TagName.Title:
+                case TagName.TitleSort:
+                case TagName.Year:
+                default:
+                    lsvMetadataValues.Columns.Clear();
+                    lsvMetadataValues.Columns.Add("Data", "Data", lsvMetadataValues.Width);
+                    //lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
+                    lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
+                    lblSelectMetadata.Text = "Select metadata to apply";
+                    lsvMetadataValues.AllowDrop = false;
+                    lsvMetadataValues.Cursor = Cursors.Default;
+                    grpTrackOrder.Visible = false;
+                    break;
+                case TagName.Track:
+                    lsvMetadataValues.Columns.Clear();
+                    lsvMetadataValues.Columns.Add("Num", "No", 50);
+                    lsvMetadataValues.Columns.Add("Reference", "Title or File Name", lsvMetadataValues.Width - 50);
+                    lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.Nonclickable;
+                    lsvMetadataValues.AllowDrop = true;
+                    lsvMetadataValues.Cursor = listCursor;
+                    grpTrackOrder.Visible = true;
+                    break;
+                    //case TagName.TrackCount:
+                    //    break;
+            }
+        }
+
+        /// <summary>
+        /// Gets the file or directory name from a full path
+        /// </summary>
+        /// <param name="path">The full path of the file or directory</param>
+        public string GetFileName(string path)
+        {
+            return path.Substring(path.LastIndexOf('\\') + 1);
+        }
+
+        [GeneratedRegex("%.*%")]
+        private static partial Regex EnvironmentVariable();
     }
 }

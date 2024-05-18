@@ -66,8 +66,8 @@ namespace Metadata_Setter.Models
         TitleSort,
         [Description("Track")]
         Track,
-        [Description("Track Count")]
-        TrackCount,
+        //[Description("Track Count")]
+        //TrackCount,
         [Description("Year")]
         Year,
     }
