@@ -127,8 +127,15 @@ namespace Metadata_Setter
 
         private void LsvFiles_SelectedIndexChanged(object sender, EventArgs e)
         {
-            prgModificationApply.Maximum = (lsvFiles.SelectedIndices.Count == 0 ? files.Count : lsvFiles.SelectedIndices.Count);
-            UpdateTagList(lsvFiles.SelectedIndices);
+            if (lsvMetadataValues.SelectedIndices.Count == 0)
+            {
+                prgModificationApply.Maximum = (lsvFiles.SelectedIndices.Count == 0 ? files.Count : lsvFiles.SelectedIndices.Count);
+                UpdateTagList(lsvFiles.SelectedIndices);
+            }
+            else
+            {
+                
+            }
         }
 
         private void BtnMetadataChange_Click(object sender, EventArgs e)
@@ -350,25 +357,32 @@ namespace Metadata_Setter
 
         private void Reorder(ListViewItem item1, ListViewItem item2)
         {
+            btnMetadataChange.Enabled = true;
             // item1 is the beginning
             if (item1.Index < item2.Index)
             {
-                string placeToBegin = item2.SubItems[1].Text;
+                string displayToBegin = item2.SubItems[1].Text;
+                string refersToBegin = item2.SubItems[2].Text;
                 for (int i = item2.Index; i > item1.Index; --i)
                 {
                     lsvMetadataValues.Items[i].SubItems[1].Text = lsvMetadataValues.Items[i - 1].SubItems[1].Text;
+                    lsvMetadataValues.Items[i].SubItems[2].Text = lsvMetadataValues.Items[i - 1].SubItems[2].Text;
                 }
-                item1.SubItems[1].Text = placeToBegin;
+                item1.SubItems[1].Text = displayToBegin;
+                item1.SubItems[2].Text = refersToBegin;
             }
             // item2 is the beginning
             else
             {
-                string placeToBegin = item1.SubItems[1].Text;
+                string displayToBegin = item1.SubItems[1].Text;
+                string refersToBegin = item1.SubItems[2].Text;
                 for (int i = item1.Index; i > item2.Index; --i)
                 {
                     lsvMetadataValues.Items[i].SubItems[1].Text = lsvMetadataValues.Items[i - 1].SubItems[1].Text;
+                    lsvMetadataValues.Items[i].SubItems[2].Text = lsvMetadataValues.Items[i - 1].SubItems[2].Text;
                 }
-                item2.SubItems[1].Text = placeToBegin;
+                item2.SubItems[1].Text = displayToBegin;
+                item2.SubItems[2].Text = refersToBegin;
             }
         }
 
@@ -486,6 +500,7 @@ namespace Metadata_Setter
             if (file is TrackDisplay)
             {
                 ListViewItem item = new ListViewItem((itterator + 1).ToString());
+                item.SubItems.Add((file as TrackDisplay)!.Display);
                 item.SubItems.Add(file.ToString());
                 return item;
             }
@@ -754,7 +769,7 @@ namespace Metadata_Setter
                 case TagName.Track:
                     TrackDisplay display = new TrackDisplay(file);
                     file.Tag.Track = uint.Parse(lsvMetadataValues.Items.OfType<ListViewItem>()
-                        .First(i => i.SubItems[1].Text == display.ToString()).Text);
+                        .First(i => i.SubItems[2].Text == display.ToString()).Text);
                     file.Tag.TrackCount = (uint)lsvMetadataValues.Items.Count;
                     break;
                 case TagName.Year:
@@ -1013,6 +1028,7 @@ namespace Metadata_Setter
                     lsvMetadataValues.Columns.Clear();
                     lsvMetadataValues.Columns.Add("Num", "No", 50);
                     lsvMetadataValues.Columns.Add("Reference", "Title or File Name", lsvMetadataValues.Width - 50);
+                    lsvMetadataValues.Columns.Add("Comparison", "Comparison", 0);
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.Nonclickable;
                     lsvMetadataValues.AllowDrop = true;
                     lsvMetadataValues.Cursor = listCursor;

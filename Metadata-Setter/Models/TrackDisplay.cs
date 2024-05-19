@@ -54,13 +54,25 @@ namespace Metadata_Setter.Models
             return TrackNumber.Value.CompareTo(other.TrackNumber.Value);
         }
 
+        public string Display
+        {
+            get
+            {
+                if (Title == null)
+                {
+                    return FileName.Substring(FileName.LastIndexOf('\\') + 1);
+                }
+                return Title;
+            }
+        }
+
         public override string ToString()
         {
             if (Title == null)
             {
-                return FileName.Substring(FileName.LastIndexOf('\\') + 1);
+                return "F:" + FileName.Substring(FileName.LastIndexOf('\\') + 1);
             }
-            return Title;
+            return "T:" + Title;
         }
     }
 }
