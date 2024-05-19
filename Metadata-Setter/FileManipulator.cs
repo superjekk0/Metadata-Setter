@@ -134,7 +134,7 @@ namespace Metadata_Setter
             }
             else
             {
-                
+
             }
         }
 
@@ -326,6 +326,7 @@ namespace Metadata_Setter
             {
                 lsvMetadataValues.Cursor = grabCursor;
                 dragging = true;
+                //SelectFiles();
             }
         }
 
@@ -344,15 +345,28 @@ namespace Metadata_Setter
             }
         }
 
+        private void IndexChanged(object sender, EventArgs e)
+        {
+            SelectFiles();
+        }
         //
         // Various utility functions
         //
         private void AutoScrollListView(int index)
         {
+            targetedItem = lsvMetadataValues.Items[index];
             lsvMetadataValues.Items[index].Selected = true;
             lsvMetadataValues.Items[index].Focused = true;
             lsvMetadataValues.Items[index].EnsureVisible();
             lsvMetadataValues.Focus();
+        }
+
+        private void SelectFiles()
+        {
+            if (lsvMetadataValues.SelectedIndices.Count != 0)
+            {
+                files.ForEach(f => lsvFiles.Items[f.Index].Selected = PartOfSelectedMetadata(f.File));
+            }
         }
 
         private void Reorder(ListViewItem item1, ListViewItem item2)
@@ -543,8 +557,8 @@ namespace Metadata_Setter
                         .Select(f => f.Tag.AmazonId)
                         .Distinct()
                         .ToArray();
-                case TagName.Artists:
-                    break;
+                //case TagName.Artists:
+                //    break;
                 case TagName.BeatsPerMinute:
                     return files.Where(f => f.Tag.BeatsPerMinute != 0)
                         .Select(f => f.Tag.BeatsPerMinute.ToString())
@@ -694,9 +708,9 @@ namespace Metadata_Setter
                 case TagName.AmazonID:
                     file.Tag.AmazonId = txtApplyValue.Text;
                     break;
-                case TagName.Artists:
-                    //file.Tag.Artists = txtApplyValue.Text.Split(';');
-                    break;
+                //case TagName.Artists:
+                //    //file.Tag.Artists = txtApplyValue.Text.Split(';');
+                //    break;
                 case TagName.BeatsPerMinute:
                     file.Tag.BeatsPerMinute = (uint)numValues.Value;
                     break;
@@ -787,7 +801,7 @@ namespace Metadata_Setter
                 case TagName.Album:
                 case TagName.AlbumArtists:
                 case TagName.AmazonID:
-                case TagName.Artists:
+                    //case TagName.Artists:
                     return true;
                 case TagName.BeatsPerMinute:
                     return numValues.Value >= 0 && numValues.Value <= 500;
@@ -849,11 +863,11 @@ namespace Metadata_Setter
                     txtApplyValue.PlaceholderText = "Amazon ID";
                     txtApplyValue.Visible = true;
                     break;
-                case TagName.Artists:
-                    numValues.Visible = false;
-                    txtApplyValue.PlaceholderText = "Artist1;Artist2";
-                    txtApplyValue.Visible = true;
-                    break;
+                //case TagName.Artists:
+                //    numValues.Visible = false;
+                //    txtApplyValue.PlaceholderText = "Artist1;Artist2";
+                //    txtApplyValue.Visible = true;
+                //    break;
                 case TagName.BeatsPerMinute:
                     txtApplyValue.Visible = false;
                     numValues.Minimum = 0;
@@ -990,7 +1004,7 @@ namespace Metadata_Setter
                 case TagName.Album:
                 case TagName.AlbumArtists:
                 case TagName.AmazonID:
-                case TagName.Artists:
+                //case TagName.Artists:
                 case TagName.BeatsPerMinute:
                 case TagName.Comment:
                 case TagName.Composers:
@@ -1015,6 +1029,7 @@ namespace Metadata_Setter
                 case TagName.TitleSort:
                 case TagName.Year:
                 default:
+                    lsvMetadataValues.View = View.Details;
                     lsvMetadataValues.Columns.Clear();
                     lsvMetadataValues.Columns.Add("Data", "Data", lsvMetadataValues.Width);
                     //lsvMetadataValues.Columns.Add("Refers", "ReferenceInfo", 0);
@@ -1025,6 +1040,7 @@ namespace Metadata_Setter
                     grpTrackOrder.Visible = false;
                     break;
                 case TagName.Track:
+                    lsvMetadataValues.View = View.Details;
                     lsvMetadataValues.Columns.Clear();
                     lsvMetadataValues.Columns.Add("Num", "No", 50);
                     lsvMetadataValues.Columns.Add("Reference", "Title or File Name", lsvMetadataValues.Width - 50);
@@ -1034,16 +1050,96 @@ namespace Metadata_Setter
                     lsvMetadataValues.Cursor = listCursor;
                     grpTrackOrder.Visible = true;
                     break;
-                    //case TagName.TrackCount:
-                    //    break;
+                case TagName.Pictures:
+                    lsvMetadataValues.View = View.LargeIcon;
+                    lsvMetadataValues.Columns.Clear();
+                    lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
+                    lsvMetadataValues.Cursor = Cursors.Default;
+                    grpTrackOrder.Visible = false;
+                    break;
             }
+        }
+
+        private bool PartOfSelectedMetadata(TagLib.File file)
+        {
+            ListViewItem? item = (tagName != TagName.Track ? lsvMetadataValues.SelectedItems[0] : targetedItem);
+            if (item == null)
+            {
+                return false;
+            }
+
+            switch (tagName)
+            {
+                case TagName.Album:
+                    return file.Tag.Album == item.Text;
+                case TagName.AlbumArtists:
+                    return new AttributeArray<string>(file.Tag.AlbumArtists).ToString() == item.Text;
+                case TagName.AmazonID:
+                    return file.Tag.AmazonId == item.Text;
+                //case TagName.Artists:
+                //    break;
+                case TagName.BeatsPerMinute:
+                    return file.Tag.BeatsPerMinute.ToString() == item.Text;
+                case TagName.Comment:
+                    return file.Tag.Comment == item.Text;
+                case TagName.Composers:
+                    return new AttributeArray<string>(file.Tag.Composers).ToString() == item.Text;
+                case TagName.ComposersSort:
+                    return new AttributeArray<string>(file.Tag.ComposersSort).ToString() == item.Text;
+                case TagName.Conductor:
+                    return file.Tag.Conductor == item.Text;
+                case TagName.Copyright:
+                    return file.Tag.Copyright == item.Text;
+                case TagName.Description:
+                    return file.Tag.Description == item.Text;
+                case TagName.Disc:
+                    return file.Tag.Disc.ToString() == item.Text;
+                case TagName.DiscCount:
+                    return file.Tag.DiscCount.ToString() == item.Text;
+                case TagName.Genre:
+                    return new AttributeArray<string>(file.Tag.Genres).ToString() == item.Text;
+                case TagName.Grouping:
+                    return file.Tag.Grouping == item.Text;
+                case TagName.InitialKey:
+                    return file.Tag.InitialKey == item.Text;
+                case TagName.ISRC:
+                    return file.Tag.ISRC == item.Text;
+                case TagName.Lyrics:
+                    return file.Tag.Lyrics == item.Text;
+                case TagName.Performers:
+                    return new AttributeArray<string>(file.Tag.Performers).ToString() == item.Text;
+                case TagName.PerformersSort:
+                    return new AttributeArray<string>(file.Tag.PerformersSort).ToString() == item.Text;
+                case TagName.PerformersRole:
+                    return new AttributeArray<string>(file.Tag.PerformersRole).ToString() == item.Text;
+                case TagName.Pictures:
+                    // TODO : Make a special implementation for pictures
+                    break;
+                case TagName.Publisher:
+                    return file.Tag.Publisher == item.Text;
+                case TagName.RemixedBy:
+                    return file.Tag.RemixedBy == item.Text;
+                case TagName.Subtitle:
+                    return file.Tag.Subtitle == item.Text;
+                case TagName.Title:
+                    return file.Tag.Title == item.Text;
+                case TagName.TitleSort:
+                    return file.Tag.TitleSort == item.Text;
+                case TagName.Track:
+                    return new TrackDisplay(file).ToString() == item.SubItems[2].Text;
+                case TagName.Year:
+                    return file.Tag.Year.ToString() == item.Text;
+                default:
+                    break;
+            }
+            return false;
         }
 
         /// <summary>
         /// Gets the file or directory name from a full path
         /// </summary>
         /// <param name="path">The full path of the file or directory</param>
-        public string GetFileName(string path)
+        public static string GetFileName(string path)
         {
             return path.Substring(path.LastIndexOf('\\') + 1);
         }

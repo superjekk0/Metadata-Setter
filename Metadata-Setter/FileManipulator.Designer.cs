@@ -206,6 +206,7 @@
             lsvMetadataValues.TabIndex = 15;
             lsvMetadataValues.UseCompatibleStateImageBehavior = false;
             lsvMetadataValues.View = View.Details;
+            lsvMetadataValues.SelectedIndexChanged += IndexChanged;
             lsvMetadataValues.MouseDown += LsvMetadataValues_MouseDown;
             lsvMetadataValues.MouseMove += LsvMetadataValues_MouseMove;
             lsvMetadataValues.MouseUp += LsvMetadataValues_MouseUp;

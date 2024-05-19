@@ -16,8 +16,8 @@ namespace Metadata_Setter.Models
         AlbumArtists,
         [Description("Amazon ID")]
         AmazonID,
-        [Description("Artists")]
-        Artists,
+        //[Description("Artists")]
+        //Artists,
         [Description("Beats per Minute")]
         BeatsPerMinute,
         [Description("Comment")]
@@ -52,8 +52,8 @@ namespace Metadata_Setter.Models
         PerformersSort,
         [Description("Performers Role")]
         PerformersRole,
-        //[Description("Pictures")]
-        //Pictures,
+        [Description("Pictures")]
+        Pictures,
         [Description("Publisher")]
         Publisher,
         [Description("Remixed By")]

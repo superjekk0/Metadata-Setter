@@ -60,7 +60,7 @@ namespace Metadata_Setter.Models
             {
                 if (Title == null)
                 {
-                    return FileName.Substring(FileName.LastIndexOf('\\') + 1);
+                    return FrmFileManipulator.GetFileName(FileName);
                 }
                 return Title;
             }
@@ -70,7 +70,7 @@ namespace Metadata_Setter.Models
         {
             if (Title == null)
             {
-                return "F:" + FileName.Substring(FileName.LastIndexOf('\\') + 1);
+                return "F:" + FrmFileManipulator.GetFileName(FileName);
             }
             return "T:" + Title;
         }
