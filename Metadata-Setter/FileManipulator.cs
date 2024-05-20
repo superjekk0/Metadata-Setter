@@ -503,19 +503,31 @@ namespace Metadata_Setter
             List<ListViewItem> items = new List<ListViewItem>();
             for (int i = 0; i < hitFiles.Length; i++)
             {
+                if (hitFiles is IPicture[][])
+                {
+                    (hitFiles[i] as IPicture[])!.ToList().ForEach
+                        (p => lsvMetadataValues.LargeImageList.Images
+                        .Add(lsvMetadataValues.LargeImageList.Images.Count.ToString(),
+                        Image.FromStream(new MemoryStream(p.Data.Data))));
+                }
                 items.Add(MetaData(hitFiles[i], i));
             }
             lsvMetadataValues.Items.AddRange(items.ToArray());
             btnMetadataChange.Enabled = aimedFiles.Count != 0;
         }
 
-        private static ListViewItem MetaData(object file, int itterator)
+        private static ListViewItem MetaData(object file, int itterator, ImageList? images = null)
         {
             if (file is TrackDisplay)
             {
                 ListViewItem item = new ListViewItem((itterator + 1).ToString());
                 item.SubItems.Add((file as TrackDisplay)!.Display);
                 item.SubItems.Add(file.ToString());
+                return item;
+            }
+            else if (file is IPicture)
+            {
+                ListViewItem item = new ListViewItem("Picture");
                 return item;
             }
             return new ListViewItem(file.ToString());
@@ -644,11 +656,10 @@ namespace Metadata_Setter
                         .Select(f => new AttributeArray<string>(f.Tag.PerformersRole))
                         .Distinct()
                         .ToArray();
-                //case TagName.Pictures:
-                //    return files.Select(f => new AttributeArray<IPicture>(f.Tag.Pictures))
-                //        .Where(f => f.Array.Length != 0)
-                //        .Distinct()
-                //        .ToArray();
+                case TagName.Pictures:
+                    return files.Where(f => f.Tag.Pictures.Length != 0)
+                        .Select(f => f.Tag.Pictures.Select(p => p).ToArray()) // Will be modified
+                        .ToArray();
                 case TagName.Publisher:
                     return files.Where(f => f.Tag.Publisher != null)
                         .Select(f => f.Tag.Publisher)
@@ -1052,6 +1063,7 @@ namespace Metadata_Setter
                     break;
                 case TagName.Pictures:
                     lsvMetadataValues.View = View.LargeIcon;
+                    lsvMetadataValues.LargeImageList = new ImageList();
                     lsvMetadataValues.Columns.Clear();
                     lsvMetadataValues.HeaderStyle = ColumnHeaderStyle.None;
                     lsvMetadataValues.Cursor = Cursors.Default;
