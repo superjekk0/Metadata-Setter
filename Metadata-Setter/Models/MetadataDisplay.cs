@@ -9,30 +9,17 @@ namespace Metadata_Setter.Models
     public abstract class MetadataDisplay : IComparable<MetadataDisplay>
     {
         public string FileName { get; set; }
-        public string? Title { get; set; }
+        //public string? Title { get; set; }
 
         public MetadataDisplay(TagLib.File file)
         {
             FileName = file.Name;
-            Title = file.Tag.Title;
+            //Title = file.Tag.Title;
         }
 
         public virtual int CompareTo(MetadataDisplay? other)
         {
             if (other == null)
-            {
-                return 1;
-            }
-
-            if (Title == null && other.Title == null)
-            {
-                return FileName.CompareTo(other.FileName);
-            }
-            else if (Title == null)
-            {
-                return -1;
-            }
-            else if (other.Title == null)
             {
                 return 1;
             }
@@ -44,21 +31,21 @@ namespace Metadata_Setter.Models
         {
             get
             {
-                if (Title == null)
-                {
+                //if (Title == null)
+                //{
                     return FrmFileManipulator.GetFileName(FileName);
-                }
-                return Title;
+                //}
+                //return Title;
             }
         }
 
         public override string ToString()
         {
-            if (Title == null)
-            {
-                return "F:" + FrmFileManipulator.GetFileName(FileName);
-            }
-            return "T:" + Title;
+            //if (Title == null)
+            //{
+            return "F:" + FrmFileManipulator.GetFileName(FileName);
+            //}
+            //return "T:" + Title;
         }
     }
 }

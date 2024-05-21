@@ -61,30 +61,4 @@ namespace Metadata_Setter.Models
             return ToString().GetHashCode();
         }
     }
-
-    public class PictureArray : AttributeArray<PictureDisplay>
-    {
-        public PictureArray(PictureDisplay[] array) : base(array)
-        {
-        }
-
-        public override int GetHashCode()
-        {
-            int hash = 0;
-            foreach (PictureDisplay picture in Array)
-            {
-                hash ^= picture.GetHashCode();
-            }
-            return hash;
-        }
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is PictureArray a)
-            {
-                return this.GetHashCode() == a.GetHashCode();
-            }
-            return base.Equals(obj);
-        }
-    }
 }

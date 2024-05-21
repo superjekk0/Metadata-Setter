@@ -503,14 +503,15 @@ namespace Metadata_Setter
             List<ListViewItem> items = new List<ListViewItem>();
             for (int i = 0; i < hitFiles.Length; i++)
             {
-                if (hitFiles is PictureArray[])
-                {
-                    (hitFiles[i] as PictureArray)!.Array.ToList().ForEach(p => items.Add(MetaData(p, i, lsvMetadataValues.LargeImageList)));
-                }
-                else
-                {
-                    items.Add(MetaData(hitFiles[i], i));
-                }
+                //if (hitFiles is PictureDisplay[])
+                //{
+                //    items.Add(MetaData((hitFiles[i] as PictureDisplay)!, i, lsvMetadataValues.LargeImageList));
+                //    //hitFiles[i] as PictureDisplay)!(p => items.Add(MetaData(p, i, lsvMetadataValues.LargeImageList)));
+                //}
+                //else
+                //{
+                items.Add(MetaData(hitFiles[i], i, lsvMetadataValues.LargeImageList));
+                //}
             }
             lsvMetadataValues.Items.AddRange(items.ToArray());
             btnMetadataChange.Enabled = aimedFiles.Count != 0;
@@ -664,10 +665,11 @@ namespace Metadata_Setter
                         .Distinct()
                         .ToArray();
                 case TagName.Pictures:
-                    return files.Where(f => f.Tag.Pictures.Length != 0)
-                        .Select(f => new PictureArray( f.Tag.Pictures.Select(p => new PictureDisplay(f, p)).ToArray())) // Will be modified
-                        .Distinct()
-                        .ToArray();
+                    List<PictureDisplay> pictures = new List<PictureDisplay>();
+                    files.Where(f => f.Tag.Pictures.Length != 0)
+                        .ToList().ForEach(f => pictures.AddRange
+                        (f.Tag.Pictures.Select(p => new PictureDisplay(f, p)).ToArray())); // Will be modified
+                    return pictures.Distinct().ToArray();
                 case TagName.Publisher:
                     return files.Where(f => f.Tag.Publisher != null)
                         .Select(f => f.Tag.Publisher)
