@@ -12,13 +12,23 @@ namespace Metadata_Setter.Models
     {
         public Image Image { get; }
         public string? Album { get; set; }
-        private readonly uint _hashCode;
+        public uint HashCode { get; }
 
         public PictureDisplay(TagLib.File file, IPicture picture) : base(file)
         {
-            Image = Image.FromStream(new MemoryStream(picture.Data.Data));
+            Image = new Bitmap(Image.FromStream(new MemoryStream(picture.Data.Data)), 50, 50);
             Album = file.Tag.Album;
-            _hashCode = picture.Data.Checksum;
+            HashCode = picture.Data.Checksum;
+        }
+
+        /// <summary>
+        /// Will be useful for displaying full resolution images
+        /// </summary>
+        public PictureDisplay(TagLib.File file, PictureDisplay display) : base(file)
+        {
+            Image = Image.FromStream(new MemoryStream(file.Tag.Pictures.First(p => p.Data.Checksum == display.HashCode).Data.Data));
+            Album = file.Tag.Album;
+            HashCode = display.HashCode;
         }
 
         public override int CompareTo(MetadataDisplay? other)
@@ -28,19 +38,19 @@ namespace Metadata_Setter.Models
                 return base.CompareTo(other);
             }
             PictureDisplay otherDisplay = (other as PictureDisplay)!;
-            return otherDisplay._hashCode.CompareTo(_hashCode);
+            return otherDisplay.HashCode.CompareTo(HashCode);
         }
 
         public override int GetHashCode()
         {
-            return (int)_hashCode;
+            return (int)HashCode;
         }
 
         public override bool Equals(object? obj)
         {
             if (obj is PictureDisplay display)
             {
-                return display._hashCode == _hashCode;
+                return display.HashCode == HashCode;
             }
             return base.Equals(obj);
         }

@@ -475,8 +475,12 @@ namespace Metadata_Setter
 
         private void UpdateTagList(ListView.SelectedIndexCollection selectedIndices)
         {
+            TagName previousTag = tagName;
             ExtractTagName();
-            DisplayMetadataContext();
+            if (tagName != previousTag)
+            {
+                DisplayMetadataContext();
+            }
             lsvMetadataValues.Items.Clear();
 
             if (cboMetadataList.SelectedIndex == -1)
@@ -485,7 +489,7 @@ namespace Metadata_Setter
                 return;
             }
 
-            List<TagLib.File> aimedFiles;
+            IEnumerable<TagLib.File> aimedFiles;
             if (selectedIndices.Count != 0)
             {
                 aimedFiles = files
@@ -503,21 +507,13 @@ namespace Metadata_Setter
             List<ListViewItem> items = new List<ListViewItem>();
             for (int i = 0; i < hitFiles.Length; i++)
             {
-                //if (hitFiles is PictureDisplay[])
-                //{
-                //    items.Add(MetaData((hitFiles[i] as PictureDisplay)!, i, lsvMetadataValues.LargeImageList));
-                //    //hitFiles[i] as PictureDisplay)!(p => items.Add(MetaData(p, i, lsvMetadataValues.LargeImageList)));
-                //}
-                //else
-                //{
                 items.Add(MetaData(hitFiles[i], i, lsvMetadataValues.LargeImageList));
-                //}
             }
             lsvMetadataValues.Items.AddRange(items.ToArray());
-            btnMetadataChange.Enabled = aimedFiles.Count != 0;
+            btnMetadataChange.Enabled = aimedFiles.Any();
         }
 
-        private static ListViewItem MetaData(object file, int itterator, ImageList? images = null)
+        private static ListViewItem MetaData(object file, int itterator, ImageList images)
         {
             if (file is TrackDisplay)
             {
@@ -526,15 +522,14 @@ namespace Metadata_Setter
                 item.SubItems.Add(file.ToString());
                 return item;
             }
-            else if (file is PictureDisplay)
+            else if (file is PictureDisplay picture)
             {
-                ListViewItem item = new ListViewItem((file as PictureDisplay)!.Display);
-                item.SubItems.Add((file as PictureDisplay)!.ToString());
+                ListViewItem item = new ListViewItem(picture.Display);
+                item.SubItems.Add(picture.HashCode.ToString());
                 if (images != null)
                 {
-                    string idImage = Guid.NewGuid().ToString();
-                    images.Images.Add(idImage, (file as PictureDisplay)!.Image);
-                    item.ImageKey = idImage;
+                    images.Images.Add(picture.HashCode.ToString(), picture.Image);
+                    item.ImageKey = picture.HashCode.ToString();
                 }
                 return item;
             }
@@ -558,7 +553,7 @@ namespace Metadata_Setter
             }
         }
 
-        private object[] FileTags(List<TagLib.File> files)
+        private object[] FileTags(IEnumerable<TagLib.File> files)
         {
             switch (tagName)
             {
@@ -665,11 +660,11 @@ namespace Metadata_Setter
                         .Distinct()
                         .ToArray();
                 case TagName.Pictures:
-                    List<PictureDisplay> pictures = new List<PictureDisplay>();
-                    files.Where(f => f.Tag.Pictures.Length != 0)
-                        .ToList().ForEach(f => pictures.AddRange
-                        (f.Tag.Pictures.Select(p => new PictureDisplay(f, p)).ToArray())); // Will be modified
-                    return pictures.Distinct().ToArray();
+                    return files.Where(f => f.Tag.Pictures.Length != 0)
+                        .SelectMany(f => f.Tag.Pictures)
+                        .DistinctBy(p => p.Data.Checksum)
+                        .Select(p => new PictureDisplay(files.First(f => f.Tag.Pictures.Contains(p)), p))
+                        .ToArray();
                 case TagName.Publisher:
                     return files.Where(f => f.Tag.Publisher != null)
                         .Select(f => f.Tag.Publisher)
@@ -1136,8 +1131,8 @@ namespace Metadata_Setter
                 case TagName.PerformersRole:
                     return new AttributeArray<string>(file.Tag.PerformersRole).ToString() == item.Text;
                 case TagName.Pictures:
+                    return file.Tag.Pictures.Any(p => p.Data.Checksum.ToString() == item.SubItems[1].Text);
                     // TODO : Make a special implementation for pictures
-                    break;
                 case TagName.Publisher:
                     return file.Tag.Publisher == item.Text;
                 case TagName.RemixedBy:
