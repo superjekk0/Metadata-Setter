@@ -125,16 +125,15 @@ namespace Metadata_Setter
             UpdateTagList(lsvFiles.SelectedIndices);
         }
 
+        // For a weird reason, the event is triggered as many times as there are items 
+        // when we reset the selected indices. It is not THAT important, but it might
+        // impact performances.
         private void LsvFiles_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lsvMetadataValues.SelectedIndices.Count == 0)
             {
                 prgModificationApply.Maximum = (lsvFiles.SelectedIndices.Count == 0 ? files.Count : lsvFiles.SelectedIndices.Count);
                 UpdateTagList(lsvFiles.SelectedIndices);
-            }
-            else
-            {
-
             }
         }
 
@@ -297,8 +296,14 @@ namespace Metadata_Setter
 
         private void LsvMetadataValues_MouseUp(object sender, MouseEventArgs e)
         {
+            if (lsvFiles.SelectedIndices.Count != 0)
+            {
+                lsvFiles.EnsureVisible(lsvFiles.SelectedIndices[0]);
+            }
+
             if (tagName != TagName.Track)
             {
+                lsvFiles.Focus();
                 return;
             }
 
@@ -345,9 +350,14 @@ namespace Metadata_Setter
             }
         }
 
-        private void IndexChanged(object sender, EventArgs e)
+        private void LsvMetadata_IndexChanged(object sender, EventArgs e)
         {
             SelectFiles();
+        }
+
+        private void LsvFiles_ItemActivate(object sender, EventArgs e)
+        {
+            lsvMetadataValues.SelectedIndices.Clear();
         }
         //
         // Various utility functions
@@ -1132,7 +1142,7 @@ namespace Metadata_Setter
                     return new AttributeArray<string>(file.Tag.PerformersRole).ToString() == item.Text;
                 case TagName.Pictures:
                     return file.Tag.Pictures.Any(p => p.Data.Checksum.ToString() == item.SubItems[1].Text);
-                    // TODO : Make a special implementation for pictures
+                // TODO : Make a special implementation for pictures
                 case TagName.Publisher:
                     return file.Tag.Publisher == item.Text;
                 case TagName.RemixedBy:
