@@ -29,13 +29,13 @@ namespace Metadata_Setter.Models
         {
             get
             {
-                return FrmFileManipulator.GetFileName(FileName);
+                return Utils.GetFileName(FileName);
             }
         }
 
         public override string ToString()
         {
-            return "F:" + FrmFileManipulator.GetFileName(FileName);
+            return "F:" + Utils.GetFileName(FileName);
         }
     }
 }

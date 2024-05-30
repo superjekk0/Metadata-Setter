@@ -146,6 +146,7 @@
             txtApplyValue.Name = "txtApplyValue";
             txtApplyValue.Size = new Size(265, 23);
             txtApplyValue.TabIndex = 10;
+            txtApplyValue.Click += TxtApplyValue_Click;
             // 
             // LblNewValue
             // 

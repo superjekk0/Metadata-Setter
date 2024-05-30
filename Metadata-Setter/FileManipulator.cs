@@ -359,6 +359,22 @@ namespace Metadata_Setter
         {
             lsvMetadataValues.SelectedIndices.Clear();
         }
+
+        private void TxtApplyValue_Click(object sender, EventArgs e)
+        {
+            if (tagName != TagName.Pictures)
+            {
+                return;
+            }
+
+            FrmPictures pictures = new FrmPictures();
+            if (pictures.ShowDialog() == DialogResult.OK)
+            {
+                ;
+            }
+            this.ActiveControl = null;
+
+        }
         //
         // Various utility functions
         //
@@ -455,8 +471,8 @@ namespace Metadata_Setter
 
                 }
                 lsvFiles.Items.Clear();
-                lsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(GetFileName(d), 0)).ToArray());
-                lsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(GetFileName(f), 1)).ToArray());
+                lsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(Utils.GetFileName(d), 0)).ToArray());
+                lsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(Utils.GetFileName(f), 1)).ToArray());
                 files = lsvFiles.Items.OfType<ListViewItem>()
                     .Where(i => i.ImageIndex != 0 && TagLib.SupportedMimeType
                     .AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
@@ -972,8 +988,11 @@ namespace Metadata_Setter
                     txtApplyValue.PlaceholderText = "Piano;Bass";
                     txtApplyValue.Visible = true;
                     break;
-                //case TagName.Pictures:
-                //    break;
+                case TagName.Pictures:
+                    numValues.Visible = false;
+                    txtApplyValue.PlaceholderText = "Click here to select pictures as attribute";
+                    txtApplyValue.Visible = true;
+                    break;
                 case TagName.Publisher:
                     numValues.Visible = false;
                     txtApplyValue.PlaceholderText = "Publisher";
@@ -1161,15 +1180,6 @@ namespace Metadata_Setter
                     break;
             }
             return false;
-        }
-
-        /// <summary>
-        /// Gets the file or directory name from a full path
-        /// </summary>
-        /// <param name="path">The full path of the file or directory</param>
-        public static string GetFileName(string path)
-        {
-            return path.Substring(path.LastIndexOf('\\') + 1);
         }
 
         [GeneratedRegex("%.*%")]
