@@ -8,18 +8,27 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using TagLib;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 namespace Metadata_Setter
 {
     public partial class FrmPictures : Form
     {
-        public List<TagLib.IPicture> Pictures { get; set; }
-        public FrmPictures()
+        public List<IPicture> Pictures { get; set; }
+        public FrmPictures(IEnumerable<IPicture> pictures)
         {
             InitializeComponent();
-            Pictures = new List<TagLib.IPicture>();
             lsvPictures.LargeImageList = new ImageList();
             lsvPictures.LargeImageList.ImageSize = new Size(64, 64);
+            if (pictures.Any())
+            {
+                Pictures = new List<IPicture>(pictures);
+                AppendPictures(Pictures);
+            }
+            else
+            {
+                Pictures = new List<IPicture>();
+            }
         }
 
         private void BtnAdd_Click(object sender, EventArgs e)
@@ -31,13 +40,7 @@ namespace Metadata_Setter
             dialog.Multiselect = true;
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                foreach (string file in dialog.FileNames)
-                {
-                    TagLib.Picture picture = new TagLib.Picture(file);
-                    Pictures.Add(picture);
-                    lsvPictures.LargeImageList!.Images.Add(picture.Data.Checksum.ToString(), Utils.Crop(picture));
-                    lsvPictures.Items.Add(file, picture.Data.Checksum.ToString());
-                }
+                AppendPictures(dialog.FileNames);
             }
         }
 
@@ -57,6 +60,38 @@ namespace Metadata_Setter
             {
                 lsvPictures.LargeImageList!.Images.RemoveByKey(item.ImageKey);
                 lsvPictures.Items.Remove(item);
+            }
+        }
+
+        private void BtnAccept_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+        }
+
+        private void AppendPictures(IEnumerable<string> filePaths)
+        {
+            foreach (string file in filePaths)
+            {
+                Picture picture = new Picture(file);
+                // To avoid duplicates in the list
+                if (!Pictures.Any(p => p.Data.Checksum == picture.Data.Checksum))
+                {
+                    Pictures.Add(picture);
+                    lsvPictures.LargeImageList!.Images.Add(picture.Data.Checksum.ToString(), Utils.Crop(picture));
+                    lsvPictures.Items.Add(Utils.GetFileName(file), picture.Data.Checksum.ToString());
+                }
+            }
+        }
+
+        private void AppendPictures(IEnumerable<IPicture> pictures)
+        {
+            IEnumerable<IPicture> distinctPictures = pictures.DistinctBy(p => p.Data.Checksum).ToArray();
+            foreach (IPicture picture in distinctPictures)
+            {
+                Pictures.Add(picture);
+                lsvPictures.LargeImageList!.Images.Add(picture.Data.Checksum.ToString(), Utils.Crop(picture));
+                lsvPictures.Items.Add(picture.Filename, picture.Data.Checksum.ToString());
             }
         }
     }

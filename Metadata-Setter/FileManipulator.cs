@@ -21,6 +21,7 @@ namespace Metadata_Setter
         private bool dragging = false;
         private readonly Cursor listCursor = new Cursor("list.ico");
         private readonly Cursor grabCursor = new Cursor("grab.ico");
+        private List<IPicture> newPictures = new List<IPicture>();
 
         public FrmFileManipulator()
         {
@@ -172,6 +173,15 @@ namespace Metadata_Setter
             //    f.File.Save();
             //    Thread.Sleep(1000);
             //})).ToArray());
+
+            // Cleansing the album pictures. We don't care if the pictures are not linked with a file
+            IEnumerable<IPicture> pictures = newPictures.ToList();
+            newPictures.ForEach(p =>
+            {
+                p.Filename = null;
+                p.Description = null;
+            });
+
             foreach (TagLib.File file in aimedFiles)
             {
                 EditFile(file);
@@ -179,6 +189,7 @@ namespace Metadata_Setter
             }
 
             aimedFiles.ForEach(f => f.Save());
+            newPictures = pictures.ToList();
             MessageBox.Show("All files have been modified.", "Modification complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
             prgModificationApply.Value = prgModificationApply.Minimum;
             UpdateTagList(lsvFiles.SelectedIndices);
@@ -367,13 +378,12 @@ namespace Metadata_Setter
                 return;
             }
 
-            FrmPictures pictures = new FrmPictures();
+            FrmPictures pictures = new FrmPictures(newPictures);
             if (pictures.ShowDialog() == DialogResult.OK)
             {
-                ;
+                newPictures = pictures.Pictures;
             }
             this.ActiveControl = null;
-
         }
         //
         // Various utility functions
@@ -539,7 +549,7 @@ namespace Metadata_Setter
             btnMetadataChange.Enabled = aimedFiles.Any();
         }
 
-        private static ListViewItem MetaData(object file, int itterator, ImageList images)
+        private static ListViewItem MetaData(object file, int itterator, ImageList? images)
         {
             if (file is TrackDisplay)
             {
@@ -804,9 +814,9 @@ namespace Metadata_Setter
                 case TagName.PerformersRole:
                     file.Tag.PerformersRole = txtApplyValue.Text.Split(';');
                     break;
-                //case TagName.Pictures:
-                //    // TODO : Set a specific case for pictures
-                //    break;
+                case TagName.Pictures:
+                    file.Tag.Pictures = newPictures.ToArray();
+                    break;
                 case TagName.Publisher:
                     file.Tag.Publisher = txtApplyValue.Text;
                     break;
@@ -865,16 +875,12 @@ namespace Metadata_Setter
                 case TagName.Performers:
                 case TagName.PerformersSort:
                 case TagName.PerformersRole:
-                    return true;
-                //case TagName.Pictures:
-                //    // TODO : Set a specific case for pictures
-                //    return false;
+                case TagName.Pictures:
                 case TagName.Publisher:
                 case TagName.RemixedBy:
                 case TagName.Subtitle:
                 case TagName.Title:
                 case TagName.TitleSort:
-                    return true;
                 case TagName.Track:
                     return true;
                 //case TagName.TrackCount:

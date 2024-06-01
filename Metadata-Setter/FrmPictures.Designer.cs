@@ -63,6 +63,7 @@
             btnAccept.TabIndex = 2;
             btnAccept.Text = "Select those pictures";
             btnAccept.UseVisualStyleBackColor = true;
+            btnAccept.Click += BtnAccept_Click;
             // 
             // btnReset
             // 
@@ -82,7 +83,7 @@
             btnRemove.TabIndex = 4;
             btnRemove.Text = "Remove selection";
             btnRemove.UseVisualStyleBackColor = true;
-            btnRemove.Click += this.BtnRemove_Click;
+            btnRemove.Click += BtnRemove_Click;
             // 
             // btnAdd
             // 
