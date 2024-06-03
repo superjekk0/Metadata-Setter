@@ -487,12 +487,12 @@ namespace Metadata_Setter
                 {
                     lsvFiles.Items.Add(new ListViewItem(Path.GetFileName(subDirectories[i]), 0));
                 }
-                filesInDirectory = Directory.GetFiles(path).Where(f => SupportedMimeType.AllExtensions.Contains( Path.GetExtension(f).Remove(0,1))).ToArray();
+                filesInDirectory = Directory.GetFiles(path).Where(f => SupportedMimeType.AllExtensions.Contains(Path.GetExtension(f).Remove(0,1))).ToArray();
                 foreach (string file in filesInDirectory)
                 {
                     lsvFiles.Items.Add(Path.GetFileName(file), 1);
                 }
-                files = filesInDirectory.AsParallel().Select((f, i) => new FileDisplay(TagLib.File.Create(f), subDirectories.Length + i)).ToList();
+                files = filesInDirectory.AsParallel().Select((f, i) => new FileDisplay(TagLib.File.Create(f, ReadStyle.PictureLazy), subDirectories.Length + i)).ToList();
                 UpdateRepository(path);
             }
             catch (Exception ex)
