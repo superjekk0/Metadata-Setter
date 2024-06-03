@@ -21,7 +21,7 @@ namespace Metadata_Setter
         private bool dragging = false;
         private readonly Cursor listCursor = new Cursor("list.ico");
         private readonly Cursor grabCursor = new Cursor("grab.ico");
-        private List<IPicture> newPictures = new List<IPicture>();
+        private IPicture[] newPictures = new IPicture[] { };
 
         public FrmFileManipulator()
         {
@@ -175,12 +175,12 @@ namespace Metadata_Setter
             //})).ToArray());
 
             // Cleansing the album pictures. We don't care if the pictures are not linked with a file
-            IEnumerable<IPicture> pictures = newPictures.ToList();
-            newPictures.ForEach(p =>
+            IEnumerable<IPicture> pictures = newPictures.ToArray();
+            foreach (IPicture picture in newPictures)
             {
-                p.Filename = null;
-                p.Description = null;
-            });
+                picture.Filename = null;
+                picture.Description = null;
+            }
 
             foreach (TagLib.File file in aimedFiles)
             {
@@ -189,7 +189,7 @@ namespace Metadata_Setter
             }
 
             aimedFiles.ForEach(f => f.Save());
-            newPictures = pictures.ToList();
+            newPictures = pictures.ToArray();
             MessageBox.Show("All files have been modified.", "Modification complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
             prgModificationApply.Value = prgModificationApply.Minimum;
             UpdateTagList(lsvFiles.SelectedIndices);
@@ -381,7 +381,7 @@ namespace Metadata_Setter
             FrmPictures pictures = new FrmPictures(newPictures);
             if (pictures.ShowDialog() == DialogResult.OK)
             {
-                newPictures = pictures.Pictures;
+                newPictures = pictures.Pictures.ToArray();
             }
             this.ActiveControl = null;
         }
@@ -440,12 +440,12 @@ namespace Metadata_Setter
         {
             if (ActiveControl == cboMetadataList)
             {
+                cboMetadataList.DroppedDown = false;
                 if (keyData == Keys.Enter)
                 {
                     //TxtApplyValue.Focus();
                     UpdateTagList(lsvFiles.SelectedIndices);
                 }
-                cboMetadataList.DroppedDown = false;
             }
             else if (ActiveControl == cboPath && keyData == Keys.Enter)
             {
@@ -463,6 +463,7 @@ namespace Metadata_Setter
         {
             var itemsBefore = lsvFiles.Items.OfType<ListViewItem>().ToArray();
             cboPath.BeginUpdate();
+            string[] filesInDirectory;
 
             try
             {
@@ -481,13 +482,17 @@ namespace Metadata_Setter
 
                 }
                 lsvFiles.Items.Clear();
-                lsvFiles.Items.AddRange(Directory.GetDirectories(path).Select(d => new ListViewItem(Utils.GetFileName(d), 0)).ToArray());
-                lsvFiles.Items.AddRange(Directory.GetFiles(path).Select(f => new ListViewItem(Utils.GetFileName(f), 1)).ToArray());
-                files = lsvFiles.Items.OfType<ListViewItem>()
-                    .Where(i => i.ImageIndex != 0 && TagLib.SupportedMimeType
-                    .AllExtensions.Contains(i.Text.Substring(i.Text.LastIndexOf('.') + 1)))
-                    .Select(i => new FileDisplay(TagLib.File.Create(path + i.Text), i.Index))
-                    .ToList();
+                string[] subDirectories = Directory.GetDirectories(path);
+                for (int i = 0; i < subDirectories.Length; i++)
+                {
+                    lsvFiles.Items.Add(new ListViewItem(Path.GetFileName(subDirectories[i]), 0));
+                }
+                filesInDirectory = Directory.GetFiles(path).Where(f => SupportedMimeType.AllExtensions.Contains( Path.GetExtension(f).Remove(0,1))).ToArray();
+                foreach (string file in filesInDirectory)
+                {
+                    lsvFiles.Items.Add(Path.GetFileName(file), 1);
+                }
+                files = filesInDirectory.AsParallel().Select((f, i) => new FileDisplay(TagLib.File.Create(f), subDirectories.Length + i)).ToList();
                 UpdateRepository(path);
             }
             catch (Exception ex)
@@ -511,6 +516,7 @@ namespace Metadata_Setter
 
         private void UpdateTagList(ListView.SelectedIndexCollection selectedIndices)
         {
+            lsvMetadataValues.BeginUpdate();
             TagName previousTag = tagName;
             ExtractTagName();
             if (tagName != previousTag)
@@ -522,20 +528,20 @@ namespace Metadata_Setter
             if (cboMetadataList.SelectedIndex == -1)
             {
                 btnMetadataChange.Enabled = false;
+                lsvMetadataValues.EndUpdate();
                 return;
             }
 
-            IEnumerable<TagLib.File> aimedFiles;
+            IEnumerable<FileDisplay> aimedFiles;
             if (selectedIndices.Count != 0)
             {
                 aimedFiles = files
                     .Where(f => selectedIndices.Contains(f.Index))
-                    .Select(f => f.File)
                     .ToList();
             }
             else
             {
-                aimedFiles = files.Select(f => f.File).ToList();
+                aimedFiles = files;
             }
 
             //LstMetadataValues.Items.AddRange(FileTags(aimedFiles, CboMetadataList.Text));
@@ -547,6 +553,7 @@ namespace Metadata_Setter
             }
             lsvMetadataValues.Items.AddRange(items.ToArray());
             btnMetadataChange.Enabled = aimedFiles.Any();
+            lsvMetadataValues.EndUpdate();
         }
 
         private static ListViewItem MetaData(object file, int itterator, ImageList? images)
@@ -589,157 +596,223 @@ namespace Metadata_Setter
             }
         }
 
-        private object[] FileTags(IEnumerable<TagLib.File> files)
+        private object[] FileTags(IEnumerable<FileDisplay> files)
         {
             switch (tagName)
             {
                 case TagName.Album:
-                    return files.Where(f => f.Tag.Album != null)
-                        .Select(f => f.Tag.Album)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Album != null)
+                        .DistinctBy(f => f.File.Tag.Album)
+                        .Select(f => f.File.Tag.Album)
                         .ToArray();
                 case TagName.AlbumArtists:
-                    return files.Where(f => f.Tag.AlbumArtists.Length != 0)
-                        .Select(f => new AttributeArray<string>(f.Tag.AlbumArtists))
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.AlbumArtists.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            int hash = 0;
+                            foreach (string artist in f.File.Tag.AlbumArtists)
+                            {
+                                hash ^= artist.GetHashCode();
+                            }
+                            return hash;
+                        })
+                        .Select(f => new AttributeArray<string>(f.File.Tag.AlbumArtists))
                         .ToArray();
                 case TagName.AmazonID:
-                    return files.Where(f => f.Tag.AmazonId != null)
-                        .Select(f => f.Tag.AmazonId)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.AmazonId != null)
+                        .DistinctBy(f => f.File.Tag.AmazonId)
+                        .Select(f => f.File.Tag.AmazonId)
                         .ToArray();
                 //case TagName.Artists:
                 //    break;
                 case TagName.BeatsPerMinute:
-                    return files.Where(f => f.Tag.BeatsPerMinute != 0)
-                        .Select(f => f.Tag.BeatsPerMinute.ToString())
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.BeatsPerMinute != 0)
+                        .DistinctBy(f => f.File.Tag.BeatsPerMinute)
+                        .Select(f => f.File.Tag.BeatsPerMinute.ToString())
                         .ToArray();
                 case TagName.Comment:
-                    return files.Where(f => f.Tag.Comment != null)
-                        .Select(f => f.Tag.Comment)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Comment != null)
+                        .DistinctBy(f => f.File.Tag.Comment)
+                        .Select(f => f.File.Tag.Comment)
                         .ToArray();
                 case TagName.Composers:
-                    return files.Where(f => f.Tag.Composers.Length != 0)
-                        .Select(f => new AttributeArray<string>(f.Tag.Composers))
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Composers.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            int hash = 0;
+                            foreach (string composer in f.File.Tag.Composers)
+                            {
+                                hash ^= composer.GetHashCode();
+                            }
+                            return hash;
+                        })
+                        .Select(f => new AttributeArray<string>(f.File.Tag.Composers))
                         .ToArray();
                 case TagName.ComposersSort:
-                    return files.Where(f => f.Tag.ComposersSort.Length != 0)
-                        .Select(f => new AttributeArray<string>(f.Tag.ComposersSort))
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.ComposersSort.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            int hash = 0;
+                            foreach (string composer in f.File.Tag.ComposersSort)
+                            {
+                                hash ^= composer.GetHashCode();
+                            }
+                            return hash;
+                        })
+                        .Select(f => new AttributeArray<string>(f.File.Tag.ComposersSort))
                         .ToArray();
                 case TagName.Conductor:
-                    return files.Where(f => f.Tag.Conductor != null)
-                        .Select(f => f.Tag.Conductor)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Conductor != null)
+                        .DistinctBy(f => f.File.Tag.Conductor)
+                        .Select(f => f.File.Tag.Conductor)
                         .ToArray();
                 case TagName.Copyright:
-                    return files.Where(f => f.Tag.Copyright != null)
-                        .Select(f => f.Tag.Copyright)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Copyright != null)
+                        .DistinctBy(f => f.File.Tag.Copyright)
+                        .Select(f => f.File.Tag.Copyright)
                         .ToArray();
                 case TagName.Description:
-                    return files.Where(f => f.Tag.Description != null)
-                        .Select(f => f.Tag.Description)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Description != null)
+                        .DistinctBy(f => f.File.Tag.Description)
+                        .Select(f => f.File.Tag.Description)
                         .ToArray();
                 case TagName.Disc:
-                    return files.Where(f => f.Tag.Disc != 0)
-                        .Select(f => f.Tag.Disc.ToString())
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Disc != 0)
+                        .DistinctBy(f => f.File.Tag.Disc)
+                        .Select(f => f.File.Tag.Disc.ToString())
                         .ToArray();
                 case TagName.DiscCount:
-                    return files.Where(f => f.Tag.DiscCount != 0)
-                        .Select(f => f.Tag.DiscCount.ToString())
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.DiscCount != 0)
+                        .DistinctBy(f => f.File.Tag.DiscCount)
+                        .Select(f => f.File.Tag.DiscCount.ToString())
                         .ToArray();
                 case TagName.Genre:
-                    return files.Where(f => f.Tag.Genres.Length != 0)
-                        .Select(f => new AttributeArray<string>(f.Tag.Genres))
+                    return files.Where(f => f.File.Tag.Genres.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            int hash = 0;
+                            foreach (string genre in f.File.Tag.Genres)
+                            {
+                                hash ^= genre.GetHashCode();
+                            }
+                            return hash;
+                        })
+                        .Select(f => new AttributeArray<string>(f.File.Tag.Genres))
                         .Distinct()
                         .ToArray();
                 case TagName.Grouping:
-                    return files.Where(f => f.Tag.Grouping != null)
-                        .Select(f => f.Tag.Grouping)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Grouping != null)
+                        .DistinctBy(f => f.File.Tag.Grouping)
+                        .Select(f => f.File.Tag.Grouping)
                         .ToArray();
                 case TagName.InitialKey:
-                    return files.Where(f => f.Tag.InitialKey != null)
-                        .Select(f => f.Tag.InitialKey)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.InitialKey != null)
+                        .DistinctBy(f => f.File.Tag.InitialKey)
+                        .Select(f => f.File.Tag.InitialKey)
                         .ToArray();
                 case TagName.ISRC:
-                    return files.Where(f => f.Tag.ISRC != null)
-                        .Select(f => f.Tag.ISRC)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.ISRC != null)
+                        .DistinctBy(f => f.File.Tag.ISRC)
+                        .Select(f => f.File.Tag.ISRC)
                         .ToArray();
                 case TagName.Lyrics:
-                    return files.Where(f => f.Tag.Lyrics != null)
-                        .Select(f => f.Tag.Lyrics)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Lyrics != null)
+                        .DistinctBy(f => f.File.Tag.Lyrics)
+                        .Select(f => f.File.Tag.Lyrics)
                         .ToArray();
                 case TagName.Performers:
-                    return files.Where(a => a.Tag.Performers.Length != 0)
-                        .Select(f => new AttributeArray<string>(f.Tag.Performers))
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Performers.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            int hash = 0;
+                            foreach (string performer in f.File.Tag.Performers)
+                            {
+                                hash ^= performer.GetHashCode();
+                            }
+                            return hash;
+                        })
+                        .Select(f => new AttributeArray<string>(f.File.Tag.Performers))
                         .ToArray();
                 case TagName.PerformersSort:
-                    return files.Where(a => a.Tag.PerformersSort.Length != 0)
-                        .Select(f => new AttributeArray<string>(f.Tag.PerformersSort))
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.PerformersSort.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            int hash = 0;
+                            foreach (string performer in f.File.Tag.PerformersSort)
+                            {
+                                hash ^= performer.GetHashCode();
+                            }
+                            return hash;
+                        })
+                        .Select(f => new AttributeArray<string>(f.File.Tag.PerformersSort))
                         .ToArray();
                 case TagName.PerformersRole:
-                    return files.Where(a => a.Tag.PerformersRole.Length != 0)
-                        .Select(f => new AttributeArray<string>(f.Tag.PerformersRole))
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.PerformersRole.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            int hash = 0;
+                            foreach (string role in f.File.Tag.PerformersRole)
+                            {
+                                hash ^= role.GetHashCode();
+                            }
+                            return hash;
+                        })
+                        .Select(f => new AttributeArray<string>(f.File.Tag.PerformersRole))
                         .ToArray();
                 case TagName.Pictures:
-                    return files.Where(f => f.Tag.Pictures.Length != 0)
-                        .SelectMany(f => f.Tag.Pictures)
+                    return files.Where(f => f.File.Tag.Pictures.Length != 0)
+                        .DistinctBy(f =>
+                        {
+                            uint hash = 0;
+                            foreach (IPicture picture in f.File.Tag.Pictures)
+                            {
+                                hash ^= picture.Data.Checksum;
+                            }
+                            return hash;
+                        })
+                        .SelectMany(f => f.File.Tag.Pictures)
                         .DistinctBy(p => p.Data.Checksum)
-                        .Select(p => new PictureDisplay(files.First(f => f.Tag.Pictures.Contains(p)), p))
+                        .Select(p => new PictureDisplay(files.First(f => f.File.Tag.Pictures.Contains(p)).File, p))
                         .ToArray();
                 case TagName.Publisher:
-                    return files.Where(f => f.Tag.Publisher != null)
-                        .Select(f => f.Tag.Publisher)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Publisher != null)
+                        .DistinctBy(f => f.File.Tag.Publisher)
+                        .Select(f => f.File.Tag.Publisher)
                         .ToArray();
                 case TagName.RemixedBy:
-                    return files.Where(f => f.Tag.RemixedBy != null)
-                        .Select(f => f.Tag.RemixedBy)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.RemixedBy != null)
+                        .DistinctBy(f => f.File.Tag.RemixedBy)
+                        .Select(f => f.File.Tag.RemixedBy)
                         .ToArray();
                 case TagName.Subtitle:
-                    return files.Where(f => f.Tag.Subtitle != null)
-                        .Select(f => f.Tag.Subtitle)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Subtitle != null)
+                        .DistinctBy(f => f.File.Tag.Subtitle)
+                        .Select(f => f.File.Tag.Subtitle)
                         .ToArray();
                 case TagName.Title:
-                    return files.Where(f => f.Tag.Title != null)
-                        .Select(f => f.Tag.Title)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Title != null)
+                        .DistinctBy(f => f.File.Tag.Title)
+                        .Select(f => f.File.Tag.Title)
                         .ToArray();
                 case TagName.TitleSort:
-                    return files.Where(f => f.Tag.TitleSort != null)
-                        .Select(f => f.Tag.TitleSort)
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.TitleSort != null)
+                        .DistinctBy(f => f.File.Tag.TitleSort)
+                        .Select(f => f.File.Tag.TitleSort)
                         .ToArray();
                 case TagName.Track:
                     return files
-                        .Select(f => new TrackDisplay(f))
-                        .OrderBy(f => f)
+                        .Select(f => new TrackDisplay(f.File))
+                        .Order()
                         .ToArray();
                 //case TagName.TrackCount:
-                //    return files.Where(f => f.Tag.TrackCount != 0)
-                //        .Select(f => f.Tag.TrackCount.ToString())
+                //    return files.Where(f => f.File.Tag.TrackCount != 0)
+                //        .Select(f => f.File.Tag.TrackCount.ToString())
                 //        .Distinct()
                 //        .ToArray();
                 case TagName.Year:
-                    return files.Where(f => f.Tag.Year != 0)
-                        .Select(f => f.Tag.Year.ToString())
-                        .Distinct()
+                    return files.Where(f => f.File.Tag.Year != 0)
+                        .DistinctBy(f => f.File.Tag.Year)
+                        .Select(f => f.File.Tag.Year.ToString())
                         .ToArray();
                 default:
                     return Array.Empty<object>();
