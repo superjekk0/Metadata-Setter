@@ -7,60 +7,58 @@ using System.Threading.Tasks;
 
 namespace Metadata_Setter.Models
 {
-    public class TrackDisplay : IComparable<TrackDisplay>
+    public class TrackDisplay : MetadataDisplay
     {
-
         public uint? TrackNumber { get; set; }
         public string? Title { get; set; }
-        public string FileName { get; set; }
 
-        public TrackDisplay(TagLib.File file)
+        public TrackDisplay(TagLib.File file) : base(file)
         {
             TrackNumber = file.Tag.Track == 0 ? null : file.Tag.Track;
             Title = file.Tag.Title;
-            FileName = file.Name;
         }
 
-        public int CompareTo(TrackDisplay? other)
+        public override int CompareTo(MetadataDisplay? other)
         {
-            if (other == null)
+            if (other is not TrackDisplay)
             {
-                return 1;
+                return base.CompareTo(other);
             }
-            if (TrackNumber == null && other.TrackNumber == null)
+            TrackDisplay otherTrack = (other as TrackDisplay)!;
+            if (TrackNumber == null && otherTrack.TrackNumber == null)
             {
-                if (Title == null && other.Title == null)
+                if (Title == null && otherTrack.Title == null)
                 {
-                    return FileName.CompareTo(other.FileName);
+                    return base.CompareTo(otherTrack);
                 }
                 else if (Title == null)
                 {
-                    return -1;
-                }
-                else if (other.Title == null)
-                {
                     return 1;
                 }
-                return FileName.CompareTo(other.FileName);
+                else if (otherTrack.Title == null)
+                {
+                    return -1;
+                }
+                return base.CompareTo(otherTrack);
             }
+            else if (TrackNumber == null)
+            {
+                return -1;
+            }
+            else if (otherTrack.TrackNumber == null)
+            {
+                return 1;
+            }
+
             if (TrackNumber == null)
             {
                 return 1;
             }
-            if (other.TrackNumber == null)
+            if (otherTrack.TrackNumber == null)
             {
                 return -1;
             }
-            return TrackNumber.Value.CompareTo(other.TrackNumber.Value);
-        }
-
-        public override string ToString()
-        {
-            if (Title == null)
-            {
-                return FileName.Substring(FileName.LastIndexOf('\\') + 1);
-            }
-            return Title;
+            return TrackNumber.Value.CompareTo(otherTrack.TrackNumber.Value);
         }
     }
 }

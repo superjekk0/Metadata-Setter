@@ -146,6 +146,7 @@
             txtApplyValue.Name = "txtApplyValue";
             txtApplyValue.Size = new Size(265, 23);
             txtApplyValue.TabIndex = 10;
+            txtApplyValue.Click += TxtApplyValue_Click;
             // 
             // LblNewValue
             // 
@@ -165,6 +166,7 @@
             lsvFiles.TabIndex = 12;
             lsvFiles.UseCompatibleStateImageBehavior = false;
             lsvFiles.View = View.Details;
+            lsvFiles.ItemActivate += LsvFiles_ItemActivate;
             lsvFiles.SelectedIndexChanged += LsvFiles_SelectedIndexChanged;
             lsvFiles.MouseDoubleClick += LsvFiles_MouseDoubleClick;
             // 
@@ -206,6 +208,7 @@
             lsvMetadataValues.TabIndex = 15;
             lsvMetadataValues.UseCompatibleStateImageBehavior = false;
             lsvMetadataValues.View = View.Details;
+            lsvMetadataValues.SelectedIndexChanged += LsvMetadata_IndexChanged;
             lsvMetadataValues.MouseDown += LsvMetadataValues_MouseDown;
             lsvMetadataValues.MouseMove += LsvMetadataValues_MouseMove;
             lsvMetadataValues.MouseUp += LsvMetadataValues_MouseUp;
